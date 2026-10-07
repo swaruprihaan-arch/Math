@@ -64,10 +64,6 @@ test('a child who cannot read yet gets picture-only buttons', async ({ page }) =
 
 test('parents start a quiz from the Start tab and the child lands straight in it', async ({ page }) => {
   await page.goto('./#/parent');
-  await page.getByRole('textbox', { name: 'Passcode', exact: true }).fill('9753');
-  await page.getByRole('button', { name: 'Enter' }).click();
-  await page.getByRole('textbox', { name: 'Confirm passcode' }).fill('9753');
-  await page.getByRole('button', { name: 'Enter' }).click();
   await expect(page.getByRole('tab', { name: /Start/ })).toHaveAttribute('aria-selected', 'true');
   await page.getByRole('button', { name: /Start quiz/ }).click();
   await expect(page.getByRole('region', { name: 'Question' })).toBeVisible();
@@ -77,10 +73,6 @@ test('parents start a quiz from the Start tab and the child lands straight in it
 
 test('worksheet number is a simple 4–7 digit number', async ({ page }) => {
   await page.goto('./#/parent');
-  await page.getByRole('textbox', { name: 'Passcode', exact: true }).fill('9753');
-  await page.getByRole('button', { name: 'Enter' }).click();
-  await page.getByRole('textbox', { name: 'Confirm passcode' }).fill('9753');
-  await page.getByRole('button', { name: 'Enter' }).click();
   await page.getByRole('tab', { name: /Worksheets/ }).click();
   const field = page.getByRole('textbox', { name: 'Worksheet number' });
   await expect(field).toHaveValue(/^\d{4}$/);

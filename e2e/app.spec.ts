@@ -65,15 +65,15 @@ test('invalid input is a hint, not a wrong answer', async ({ page }) => {
   await expect(page.locator('.feedback.incorrect')).toHaveCount(0);
 });
 
-test('parent area: passcode create, lock, wrong code, unlock, choose math', async ({ page }) => {
+test('parent area: open with no passcode; make one, lock, wrong code, unlock, choose math', async ({ page }) => {
+  // No passcode by default: the grown-ups area opens straight away.
   await page.goto('./#/parent');
-  const gate = page.getByRole('region', { name: 'Grown-ups only' });
-  await expect(gate).toBeVisible();
-  await page.getByRole('textbox', { name: 'Passcode', exact: true }).fill('2468');
-  await page.getByRole('button', { name: 'Enter' }).click();
-  await page.getByRole('textbox', { name: 'Confirm passcode' }).fill('2468');
-  await page.getByRole('button', { name: 'Enter' }).click();
   await expect(page.getByRole('heading', { name: 'Grown-ups' })).toBeVisible();
+  await page.getByRole('tab', { name: '🔒 Passcode' }).click();
+  await page.getByRole('textbox', { name: 'New passcode', exact: true }).fill('2468');
+  await page.getByRole('textbox', { name: 'New passcode again' }).fill('2468');
+  await page.getByRole('button', { name: 'Save passcode' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Passcode saved' })).toBeVisible();
 
   // The Parent area opens on 🏠 Start; choose the math in 🧮 Math. Turn on fractions only.
   await page.getByRole('tab', { name: '🧮 Math' }).click();
@@ -97,10 +97,6 @@ test('grade level math: California K–8 skills are selectable', async ({ page }
   await page.goto('./');
   await expect(page.getByRole('region', { name: 'Question' })).toBeVisible();
   await page.goto('./#/parent');
-  await page.getByRole('textbox', { name: 'Passcode', exact: true }).fill('1357');
-  await page.getByRole('button', { name: 'Enter' }).click();
-  await page.getByRole('textbox', { name: 'Confirm passcode' }).fill('1357');
-  await page.getByRole('button', { name: 'Enter' }).click();
   await page.getByRole('tab', { name: '🎓 Grade Level Math' }).click();
   const panel = page.getByRole('tabpanel');
   await expect(panel).toContainText('Grade 5');
@@ -130,7 +126,33 @@ test('accessibility: no serious axe violations on kid and parent screens', async
   const serious = kid.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
   expect(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).slice(0, 3).join(' | ')}`)).toEqual([]);
   await page.goto('./#/parent');
-  await expect(page.getByRole('region', { name: 'Grown-ups only' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Grown-ups' })).toBeVisible();
   const gate = await new AxeBuilder({ page }).analyze();
   expect(gate.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical').map((v) => v.id)).toEqual([]);
+});
+
+test('reset menu on the kid screen: reset progress, and reset the passcode only with the passcode', async ({ page }) => {
+  await page.goto('./#/parent');
+  await page.getByRole('tab', { name: '🔒 Passcode' }).click();
+  await page.getByRole('textbox', { name: 'New passcode', exact: true }).fill('86420');
+  await page.getByRole('textbox', { name: 'New passcode again' }).fill('86420');
+  await page.getByRole('button', { name: 'Save passcode' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Passcode saved' })).toBeVisible();
+  await page.getByRole('link', { name: /Back to math/ }).click();
+  await expect(page.getByRole('region', { name: 'Question' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  const menu = page.getByRole('dialog', { name: 'Reset' });
+  await menu.getByRole('button', { name: /Reset passcode/ }).click();
+  await menu.getByLabel('Passcode').fill('11111');
+  await menu.getByRole('button', { name: 'Enter' }).click();
+  await expect(menu.locator('.reset-message')).toContainText('Wrong passcode');
+  await menu.getByLabel('Passcode').fill('86420');
+  await menu.getByRole('button', { name: 'Enter' }).click();
+  await expect(menu.locator('.reset-message')).toContainText('Passcode removed');
+  await menu.getByRole('button', { name: 'Close' }).click();
+
+  // No passcode any more: the grown-ups area opens straight away.
+  await page.getByRole('link', { name: /Grown-ups area/ }).click();
+  await expect(page.getByRole('heading', { name: 'Grown-ups' })).toBeVisible();
 });

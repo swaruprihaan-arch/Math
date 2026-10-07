@@ -196,3 +196,45 @@ body.simple .hw-canvas {
     font-size: 1.6rem;
   }
 }
+
+/* ---------------------------------------------------------------------
+   ↺ Reset menu (kid screen)
+   --------------------------------------------------------------------- */
+.kid-top .kid-reset {
+  margin-top: 0;
+  font-size: 1.4rem;
+}
+
+.reset-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.reset-menu {
+  width: min(420px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  margin: 0;
+  text-align: center;
+}
+
+.reset-choices {
+  display: grid;
+  gap: 12px;
+  margin: 8px 0 4px;
+}
+
+.reset-message {
+  font-weight: 700;
+}
+
+/* Simple look: page titles sit on the pale background, so they use dark ink. */
+body.simple .parent-head h1 {
+  color: var(--ink);
+  text-shadow: none;
+}

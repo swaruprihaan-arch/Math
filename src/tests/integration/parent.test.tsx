@@ -586,8 +586,16 @@ describe('ParentView', () => {
     expect(document.activeElement).toBe(screen.getByRole('tabpanel', { name: '🧒 Child' }));
   });
 
-  it('is locked until the passcode is entered', () => {
+  it('is open when no passcode is set (the default)', () => {
+    renderWith(<ParentView />);
+    expect(screen.getByRole('tablist')).toBeInTheDocument();
+  });
+
+  it('is locked until the passcode is entered once a passcode is set', async () => {
+    const { createPasscode, savePasscode } = await import('../../state/security');
+    savePasscode((await createPasscode('2468')).record);
     renderWith(<ParentView />);
     expect(screen.queryByRole('tablist')).toBeNull();
+    expect(screen.getByLabelText('Passcode')).toBeInTheDocument();
   });
 });

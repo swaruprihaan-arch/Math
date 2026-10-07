@@ -37,10 +37,6 @@ test('kid guided strategy game', async ({ page }, info) => {
 
 test('parent start + strategies', async ({ page }, info) => {
   await page.goto('./#/parent');
-  await page.getByRole('textbox', { name: 'Passcode', exact: true }).fill('2468');
-  await page.getByRole('button', { name: 'Enter' }).click();
-  await page.getByRole('textbox', { name: 'Confirm passcode' }).fill('2468');
-  await page.getByRole('button', { name: 'Enter' }).click();
   await page.screenshot({ path: `${OUT}/${info.project.name}-parent-start.png`, fullPage: true });
   await page.getByRole('tab', { name: /Strategies/ }).click();
   await page.waitForTimeout(800);

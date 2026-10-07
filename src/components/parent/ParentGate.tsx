@@ -1,19 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useApp } from '../../app/AppContext';
 import {
-  createPasscode,
-  isValidPasscode,
   MAX_PASSCODE_DIGITS,
   loadLockout,
   loadPasscode,
   lockoutAfterFailure,
   saveLockout,
-  savePasscode,
   verifyPasscode,
   type PasscodeRecord,
 } from '../../state/security';
 
-function PinPad({ value, onChange, onEnter, maxLength = MAX_PASSCODE_DIGITS, label }: { value: string; onChange: (v: string) => void; onEnter: () => void; maxLength?: number; label: string }) {
+export function PinPad({ value, onChange, onEnter, maxLength = MAX_PASSCODE_DIGITS, label }: { value: string; onChange: (v: string) => void; onEnter: () => void; maxLength?: number; label: string }) {
   return (
     <div>
       <div className="pin-dots" aria-label={`${value.length} digits entered`} role="status">
@@ -54,14 +51,14 @@ function PinPad({ value, onChange, onEnter, maxLength = MAX_PASSCODE_DIGITS, lab
   );
 }
 
-type Stage = 'enter' | 'create' | 'confirm';
-
+/**
+ * Sign-in for the grown-ups area. Only shown when a family passcode exists (by default there is none and the area is
+ * open; the passcode is made in 🔒 Passcode). "Forgot passcode?" can remove it after a confirmation.
+ */
 export function ParentGate() {
-  const { unlockParent } = useApp();
-  const [record, setRecord] = useState<PasscodeRecord | null>(() => loadPasscode());
-  const [stage, setStage] = useState<Stage>(record ? 'enter' : 'create');
+  const { unlockParent, resetPasscode } = useApp();
+  const [record] = useState<PasscodeRecord | null>(() => loadPasscode());
   const [pin, setPin] = useState('');
-  const [firstPin, setFirstPin] = useState('');
   const [showForgot, setShowForgot] = useState(false);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -76,75 +73,50 @@ export function ParentGate() {
 
   const lockedFor = Math.max(0, Math.ceil((lockout.lockedUntil - now) / 1000));
 
-  const finishCreate = async (code: string) => {
+  const submit = async () => {
+    if (busy || !record) return;
+    setMessage('');
+    if (lockedFor > 0) return;
     setBusy(true);
-    const created = await createPasscode(code);
-    savePasscode(created.record);
-    setRecord(created.record);
+    const ok = await verifyPasscode(pin, record);
     setBusy(false);
-    unlockParent();
+    setPin('');
+    if (ok) {
+      saveLockout({ failures: 0, lockedUntil: 0 });
+      setLockout({ failures: 0, lockedUntil: 0 });
+      unlockParent();
+    } else {
+      const next = lockoutAfterFailure(lockout, Date.now());
+      saveLockout(next);
+      setLockout(next);
+      setNow(Date.now());
+      setMessage('Wrong passcode.');
+    }
   };
 
-  const submit = async () => {
-    if (busy) return;
-    setMessage('');
-    if (stage === 'create') {
-      if (!isValidPasscode(pin)) return setMessage('Use 4 or more digits (numbers only).');
-      setFirstPin(pin);
-      setPin('');
-      setStage('confirm');
-      return;
-    }
-    if (stage === 'confirm') {
-      if (pin !== firstPin) {
-        setPin('');
-        setFirstPin('');
-        setStage('create');
-        return setMessage('Those did not match. Try again.');
-      }
-      await finishCreate(pin);
-      setPin('');
-      return;
-    }
-    if (stage === 'enter' && record) {
-      if (lockedFor > 0) return;
-      setBusy(true);
-      const ok = await verifyPasscode(pin, record);
-      setBusy(false);
-      setPin('');
-      if (ok) {
-        saveLockout({ failures: 0, lockedUntil: 0 });
-        setLockout({ failures: 0, lockedUntil: 0 });
-        unlockParent();
-      } else {
-        const next = lockoutAfterFailure(lockout, Date.now());
-        saveLockout(next);
-        setLockout(next);
-        setNow(Date.now());
-        setMessage('Wrong passcode.');
-      }
-    }
-  };
 
   return (
     <section className="tile studded gate" aria-label="Grown-ups only">
       <h2>🔒 Grown-ups only</h2>
-      <p>
-        {stage === 'create' && 'Make a passcode (4 or more digits, numbers only) so only grown-ups can change the math.'}
-        {stage === 'confirm' && 'Type the same passcode again.'}
-        {stage === 'enter' && 'Enter the passcode.'}
-      </p>
-      {lockedFor > 0 && stage === 'enter' ? <p className="notice">Too many tries. Wait {lockedFor} s.</p> : null}
-      <PinPad value={pin} onChange={setPin} onEnter={() => void submit()} label={stage === 'confirm' ? 'Confirm passcode' : 'Passcode'} />
-      {stage === 'enter' ? (
-        <button type="button" className="brick small ghost" onClick={() => setShowForgot((v) => !v)} aria-expanded={showForgot}>
-          Forgot passcode?
-        </button>
-      ) : null}
-      {showForgot && stage === 'enter' ? (
-        <p className="notice">
-          To start over, clear this website’s data in your browser settings. That also resets the settings and progress.
-        </p>
+      <p>Enter the passcode to sign in.</p>
+      {lockedFor > 0 ? <p className="notice">Too many tries. Wait {lockedFor} s.</p> : null}
+      <PinPad value={pin} onChange={setPin} onEnter={() => void submit()} label="Passcode" />
+      <button type="button" className="brick small ghost" onClick={() => setShowForgot((v) => !v)} aria-expanded={showForgot}>
+        Forgot passcode?
+      </button>
+      {showForgot ? (
+        <div className="notice">
+          <p>Reset the passcode to open the grown-ups area again. Settings and progress are kept. You can make a new passcode in 🔒 Passcode.</p>
+          <button
+            type="button"
+            className="brick small red"
+            onClick={() => {
+              if (globalThis.confirm('Remove the passcode? The grown-ups area will be open until you set a new one.')) resetPasscode();
+            }}
+          >
+            ↺ Reset passcode
+          </button>
+        </div>
       ) : null}
       {message ? (
         <p className="feedback incorrect" role="alert">

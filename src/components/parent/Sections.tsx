@@ -8,7 +8,7 @@ import { findStandard } from '../../curriculum/registry';
 import { generateNumericCode, isValidNumericCode } from '../../domain/random/random';
 import { buildAnswerKey, buildWorksheet } from '../../pdf/worksheetBuilder';
 import { downloadQuizReport } from '../../pdf/reportPdf';
-import { accuracy, emptyProgress } from '../../state/progress';
+import { accuracy } from '../../state/progress';
 import { BUDDIES, defaultSettings, type Baseplate, type Celebration, type FontChoice, type InputMode, type KeypadLayout, type KeypadStyle, type ReaderLevel, type WriteSpeed } from '../../state/settings';
 import { createPasscode, isValidPasscode, loadPasscode, MAX_PASSCODE_DIGITS, savePasscode, verifyPasscode } from '../../state/security';
 import { canSpeak, speak } from '../../ui/speech';
@@ -515,7 +515,7 @@ export function ChildSection() {
 
 /* ------------------------------------------------------------------ */
 export function ProgressSection() {
-  const { settings, progress, updateProgress } = useApp();
+  const { settings, progress, resetProgress } = useApp();
   const [open, setOpen] = useState<string | null>(null);
   const t = progress.totals;
   const firstTry = t.questions ? Math.round((t.firstTryCorrect / t.questions) * 100) : null;
@@ -655,7 +655,7 @@ export function ProgressSection() {
           type="button"
           className="brick small red"
           onClick={() => {
-            if (globalThis.confirm('Erase all progress and quiz history on this device?')) updateProgress(() => emptyProgress());
+            if (globalThis.confirm('Erase all progress and quiz history on this device?')) resetProgress();
           }}
         >
           🗑 Reset progress
@@ -794,40 +794,77 @@ export function WorksheetSection() {
 
 /* ------------------------------------------------------------------ */
 export function LockSection() {
-  const { settings, updateSettings, lockParent } = useApp();
+  const { settings, updateSettings, lockParent, hasPasscode, passcodeChanged, resetPasscode, resetProgress } = useApp();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
+  const [again, setAgain] = useState('');
   const [message, setMessage] = useState('');
+  const digits = (v: string) => v.replace(/\D/g, '').slice(0, MAX_PASSCODE_DIGITS);
   return (
     <div className="section-grid">
-      <Setting label="Lock now">
-        <button type="button" className="brick red" onClick={() => lockParent()}>
-          🔒 Lock
-        </button>
-      </Setting>
-      <Setting label="Auto-lock" help="The grown-ups area locks itself after this many idle minutes.">
-        <NumberField label="Minutes" value={settings.autoLockMinutes} min={1} max={120} onChange={(autoLockMinutes) => updateSettings((s) => ({ ...s, autoLockMinutes }))} />
-      </Setting>
-      <Setting label="Change passcode">
-        <input className="field" type="password" inputMode="numeric" placeholder="Current" value={current} onChange={(e) => setCurrent(e.target.value.replace(/\D/g, '').slice(0, MAX_PASSCODE_DIGITS))} aria-label="Current passcode" />
-        <input className="field" type="password" inputMode="numeric" placeholder="New (4+ digits, numbers only)" value={next} onChange={(e) => setNext(e.target.value.replace(/\D/g, '').slice(0, MAX_PASSCODE_DIGITS))} aria-label="New passcode" />
+      {hasPasscode ? (
+        <Setting label="Lock now">
+          <button type="button" className="brick red" onClick={() => lockParent()}>
+            🔒 Lock
+          </button>
+        </Setting>
+      ) : null}
+      <Setting
+        label={hasPasscode ? 'Change passcode' : 'Make a passcode'}
+        help={hasPasscode ? 'Type the current passcode, then the new one twice.' : 'No passcode yet: anyone can open this area. Make one (4 or more digits, numbers only) to keep it for grown-ups.'}
+      >
+        {hasPasscode ? <input className="field" type="password" inputMode="numeric" placeholder="Current passcode" value={current} onChange={(e) => setCurrent(digits(e.target.value))} aria-label="Current passcode" /> : null}
+        <input className="field" type="password" inputMode="numeric" placeholder="New passcode (4+ digits)" value={next} onChange={(e) => setNext(digits(e.target.value))} aria-label="New passcode" />
+        <input className="field" type="password" inputMode="numeric" placeholder="New passcode again" value={again} onChange={(e) => setAgain(digits(e.target.value))} aria-label="New passcode again" />
         <button
           type="button"
-          className="brick small"
+          className="brick small green"
           onClick={async () => {
             const rec = loadPasscode();
-            if (!rec || !(await verifyPasscode(current, rec))) return setMessage('Current passcode is wrong.');
+            if (rec && !(await verifyPasscode(current, rec))) return setMessage('Current passcode is wrong.');
             if (!isValidPasscode(next)) return setMessage('Use 4 or more digits (numbers only).');
+            if (next !== again) return setMessage('The two new passcodes do not match.');
             const created = await createPasscode(next);
             savePasscode(created.record);
-            setMessage('Passcode changed.');
+            passcodeChanged();
+            setMessage(rec ? 'Passcode changed.' : 'Passcode saved. Use it to sign in next time.');
             setCurrent('');
             setNext('');
+            setAgain('');
           }}
         >
-          Save
+          {hasPasscode ? 'Save new passcode' : 'Save passcode'}
         </button>
         {message ? <span role="status">{message}</span> : null}
+      </Setting>
+      <Setting label="Auto-lock" help="With a passcode, this area locks itself after this many idle minutes.">
+        <NumberField label="Minutes" value={settings.autoLockMinutes} min={1} max={120} onChange={(autoLockMinutes) => updateSettings((s) => ({ ...s, autoLockMinutes }))} />
+      </Setting>
+      <Setting label="Reset" help="Reset passcode removes it (this area opens without one until you make a new one). Reset progress erases scores and quiz history.">
+        <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="brick small red"
+            disabled={!hasPasscode}
+            onClick={() => {
+              if (globalThis.confirm('Remove the passcode? This area will open without one until you make a new one.')) {
+                resetPasscode();
+                setMessage('Passcode removed.');
+              }
+            }}
+          >
+            ↺ Reset passcode
+          </button>
+          <button
+            type="button"
+            className="brick small red"
+            onClick={() => {
+              if (globalThis.confirm('Erase all progress and quiz history on this device?')) resetProgress();
+            }}
+          >
+            🗑 Reset progress
+          </button>
+        </div>
       </Setting>
       <Setting label="Start over" help="Puts every setting back to the original. Progress is kept.">
         <button
@@ -842,7 +879,7 @@ export function LockSection() {
       </Setting>
       <Setting label="About">
         <span className="help">
-          The passcode is stored only as a salted hash in this browser. It keeps little hands out, but anyone who clears this browser’s data for the site resets it (along with settings and progress). There is no recovery code, so write the passcode down somewhere safe.
+          The passcode is stored only as a salted hash in this browser. It keeps little hands out. If you forget it, use “Forgot passcode?” on the sign-in screen to reset it.
         </span>
       </Setting>
     </div>

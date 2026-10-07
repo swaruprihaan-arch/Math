@@ -3,7 +3,6 @@ import { useApp } from '../../app/AppContext';
 import { THEMES } from '../../app/theme';
 import type { Session } from '../../app/useSession';
 import { formatQuestionAnswer, nodesToSpeech, questionToSpeech } from '../../domain/answer/format';
-import { loadPasscode } from '../../state/security';
 import { readingSupport, WRITE_DELAY_MS } from '../../state/settings';
 import { formatClock, remainingMs, timerSeverity } from '../../state/timerMachine';
 import { play } from '../../ui/sound';
@@ -17,6 +16,7 @@ import { Buddy, type BuddyReaction } from './Buddy';
 import { Celebration } from './Celebration';
 import { Logo } from './Logo';
 import { QuizDone } from './QuizDone';
+import { ResetMenu } from './ResetMenu';
 import { FlyingBricks, restartAnimation, TowerMini, towerBrickColor, towerSlot, useFlyingBricks } from './Tower';
 import '../../styles/kidfun.css';
 
@@ -32,7 +32,7 @@ const OP_SYMBOLS = { ADD: '+', SUBTRACT: '−', MULTIPLY: '×', DIVIDE: '÷' } a
 const OP_NAMES = { ADD: 'Adding', SUBTRACT: 'Taking away', MULTIPLY: 'Times', DIVIDE: 'Sharing (divide)' } as const;
 
 export function KidView({ session }: { session: Session }) {
-  const { settings } = useApp();
+  const { settings, hasPasscode } = useApp();
   const { q, quiz, timer, now, startQuiz } = session;
   const { fun, child } = settings;
   const rainbow = !!THEMES[settings.look.theme]?.rainbow;
@@ -43,7 +43,6 @@ export function KidView({ session }: { session: Session }) {
   const quizMode = settings.session.mode === 'QUIZ';
   const quizRunning = quiz.status === 'IN_PROGRESS';
   const timeUp = timer.status === 'EXPIRED';
-  const hasPasscode = useRef(loadPasscode() !== null);
   const [inputMode, setInputMode] = useState(settings.input.defaultMode);
   const speechOn = canSpeak();
   const canHear = speechOn && (reading.speakButtons || fun.readAloud);
@@ -236,6 +235,7 @@ export function KidView({ session }: { session: Session }) {
           <span aria-hidden="true">{session.streak}</span>
         </span>
       ) : null}
+      <ResetMenu />
       <a href="#/parent" className="brick white icon-brick kid-lock" aria-label="Grown-ups area (locked)" title="Grown-ups">
         🔒
       </a>
@@ -295,7 +295,7 @@ export function KidView({ session }: { session: Session }) {
   return (
     <div className="app kid-screen">
       {header}
-      {!hasPasscode.current ? <p className="welcome-hint">👋 Grown-ups: tap 🔒 to choose the math.</p> : null}
+      {!hasPasscode ? <p className="welcome-hint">👋 Grown-ups: tap 🔒 to choose the math.</p> : null}
       {session.error ? (
         <div className="tile notice" role="alert">
           {session.error}

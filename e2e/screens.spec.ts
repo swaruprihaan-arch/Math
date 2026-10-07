@@ -6,10 +6,6 @@ test.skip(!OUT, 'screenshots only when SHOT_DIR is set');
 
 async function unlock(page: import('@playwright/test').Page) {
   await page.goto('./#/parent');
-  await page.getByRole('textbox', { name: 'Passcode', exact: true }).fill('2468');
-  await page.getByRole('button', { name: 'Enter' }).click();
-  await page.getByRole('textbox', { name: 'Confirm passcode' }).fill('2468');
-  await page.getByRole('button', { name: 'Enter' }).click();
 }
 
 test('kid: answered + strategies', async ({ page }, info) => {
