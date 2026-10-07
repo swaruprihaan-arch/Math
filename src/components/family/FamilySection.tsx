@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../../app/AppContext';
-import { MAX_CHILDREN, MAX_PARENTS } from '../../state/accounts';
+import { exportAccount, MAX_CHILDREN, MAX_PARENTS } from '../../state/accounts';
 import { Setting, Toggle } from '../common/Controls';
 
 /**
@@ -11,6 +11,8 @@ export function FamilySection() {
   const { familyMode, setFamilyMode, account, activeChild, switchChild, addChild, removeChild, renameChild, setParents, signOut, removeAccount, signIn } = useApp();
   const [newChild, setNewChild] = useState('');
   const [newParent, setNewParent] = useState('');
+  const [copied, setCopied] = useState('');
+  const [copyNote, setCopyNote] = useState('');
 
   if (!familyMode || !account) {
     return (
@@ -119,6 +121,31 @@ export function FamilySection() {
             </button>
           </form>
         ) : null}
+      </Setting>
+
+      <Setting
+        label="Use on another device"
+        help="Copy the family code here, then on the other iPad, iPhone, Mac or Chromebook open Math Lab → Add from another device → paste it. Names, passcode, settings and progress come along. Copy it again after big changes to bring them over too."
+      >
+        <button
+          type="button"
+          className="brick small blue"
+          onClick={async () => {
+            const code = exportAccount(account);
+            setCopied(code);
+            setCopyNote('');
+            try {
+              await navigator.clipboard.writeText(code);
+              setCopyNote('Copied! Paste it on the other device.');
+            } catch {
+              setCopyNote('Select the code below and copy it.');
+            }
+          }}
+        >
+          📋 Copy family code
+        </button>
+        {copyNote ? <span role="status">{copyNote}</span> : null}
+        {copied ? <textarea className="field family-code" readOnly value={copied} rows={4} aria-label="Family code" onFocus={(e) => e.currentTarget.select()} /> : null}
       </Setting>
 
       <Setting label="Family mode" help="Turning it off goes back to one shared player. The family account stays saved for next time.">

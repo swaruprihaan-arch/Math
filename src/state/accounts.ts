@@ -7,7 +7,7 @@
  * Signing in needs a name that is on the account (a grown-up or a child) AND the account's passcode.
  * Several families can share one device: each has its own account.
  */
-import { load, remove, save } from './persistence';
+import { deserialize, load, remove, save, serialize } from './persistence';
 import { emptyProgress, type ProgressStore } from './progress';
 import { createPasscode, verifyPasscode, type PasscodeRecord } from './security';
 import { defaultSettings, sanitizeSettings, type AppSettings } from './settings';
@@ -269,4 +269,61 @@ export function deleteAccount(accountId: string): void {
     remove(progressKey(c.id));
   }
   saveAccounts(list.filter((a) => a.id !== accountId));
+}
+
+/* ---------- moving a family to another device ---------- */
+
+const TRANSFER_TAG = 'MATHLAB-FAMILY-1';
+
+interface TransferData {
+  readonly tag: string;
+  readonly account: Account;
+  readonly settings: Record<string, AppSettings>;
+  readonly progress: Record<string, ProgressStore>;
+}
+
+function toBase64(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+
+function fromBase64(b64: string): string {
+  const bin = atob(b64.replace(/\s+/g, ''));
+  return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+}
+
+/** A family code with the account (names, scrambled passcode) and every child's settings and progress. */
+export function exportAccount(a: Account): string {
+  const data: TransferData = {
+    tag: TRANSFER_TAG,
+    account: a,
+    settings: Object.fromEntries(a.children.map((c) => [c.id, loadChildSettings(c.id)])),
+    progress: Object.fromEntries(a.children.map((c) => [c.id, loadChildProgress(c.id)])),
+  };
+  return toBase64(serialize(data));
+}
+
+/**
+ * Adds a family from a code made on another device (replaces the same family if it is already here). The passcode
+ * stays the same, so everyone signs in exactly as before. Returns null when the code is not a Math Lab family code.
+ */
+export function importAccount(code: string): Account | null {
+  let data: TransferData;
+  try {
+    data = deserialize<TransferData>(fromBase64(code.trim()));
+  } catch {
+    return null;
+  }
+  if (!data || data.tag !== TRANSFER_TAG) return null;
+  const account = sanitizeAccount(data.account);
+  if (!account) return null;
+  for (const c of account.children) {
+    saveChildSettings(c.id, sanitizeSettings(data.settings?.[c.id] ?? null));
+    const p = data.progress?.[c.id];
+    saveChildProgress(c.id, p && p.version === 1 ? { ...emptyProgress(), ...p } : emptyProgress());
+  }
+  saveAccount(account);
+  return account;
 }

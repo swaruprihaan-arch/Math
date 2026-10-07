@@ -1,6 +1,10 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import { quizAnswer, settingsWith, useSettings } from './helpers';
+import { quizAnswer, settingsWith, useSettings, noFamily } from './helpers';
+
+test.beforeEach(async ({ page }) => {
+  await noFamily(page);
+});
 
 const quizSettings = settingsWith((s) => ({
   ...s,

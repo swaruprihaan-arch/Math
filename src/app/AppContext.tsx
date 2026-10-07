@@ -67,10 +67,13 @@ interface AppContextValue {
 
 const Ctx = createContext<AppContextValue | null>(null);
 const FAMILY_KEY = 'family-mode';
+/** Family mode is ON by default: the site opens on Sign in / Sign up until someone chooses to play without an account. */
+const familyModeStored = () => load<boolean>(FAMILY_KEY) !== false;
 
 export function AppProvider({ children, initialSettings, initialProgress }: { children: ReactNode; initialSettings?: AppSettings; initialProgress?: ProgressStore }) {
-  const [familyMode, setFamilyModeState] = useState(() => load<boolean>(FAMILY_KEY) === true);
-  const [signIn, setSignIn] = useState<SignIn | null>(() => (load<boolean>(FAMILY_KEY) === true ? loadSignIn() : null));
+  // Tests (and embeds) that pass their own settings start without family mode.
+  const [familyMode, setFamilyModeState] = useState(() => initialSettings === undefined && familyModeStored());
+  const [signIn, setSignIn] = useState<SignIn | null>(() => (initialSettings === undefined && familyModeStored() ? loadSignIn() : null));
   const [account, setAccount] = useState<Account | null>(() => (signIn ? getAccount(signIn.accountId) : null));
   const childId = account?.activeChildId ?? null;
   const [settings, setSettings] = useState<AppSettings>(() => initialSettings ?? (childId ? loadChildSettings(childId) : loadSettings()));
@@ -121,6 +124,8 @@ export function AppProvider({ children, initialSettings, initialProgress }: { ch
       loadChild(result.account.activeChildId);
       setParentUnlocked(result.signIn.role === 'PARENT');
       saveLockout({ failures: 0, lockedUntil: 0 });
+      // Children go straight to the math; grown-ups land on the grown-ups area.
+      if (globalThis.location) globalThis.location.hash = result.signIn.role === 'PARENT' ? '#/parent' : '#/';
     },
     [loadChild],
   );

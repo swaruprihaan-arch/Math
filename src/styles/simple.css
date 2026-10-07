@@ -804,3 +804,14 @@ body.baseplate-NIGHT .kid-screen .kid-grid > div[style*='grid-area: s'] {
     transform: none;
   }
 }
+
+.family-code {
+  width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  word-break: break-all;
+  resize: vertical;
+}
+.welcome-tabs {
+  flex-wrap: wrap;
+}

@@ -1,5 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
-import { setLevel, settingsWith, useSettings } from './helpers';
+import { setLevel, settingsWith, useSettings, noFamily } from './helpers';
+
+test.beforeEach(async ({ page }) => {
+  await noFamily(page);
+});
 
 async function draw(page: Page, canvasLabel: string, strokes: [number, number][][]) {
   const canvas = page.getByRole('img', { name: canvasLabel });

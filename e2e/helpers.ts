@@ -17,11 +17,22 @@ export async function useSettings(page: Page, settings: AppSettings) {
     ([key, value]) => {
       if (!sessionStorage.getItem('__seeded')) {
         localStorage.setItem(key, value);
+        localStorage.setItem('rihaan-math:v2:family-mode', 'false');
         sessionStorage.setItem('__seeded', '1');
       }
     },
     [KEY, JSON.stringify(settings)] as const,
   );
+}
+
+/** Play without an account (family mode off), as most tests do. */
+export async function noFamily(page: Page) {
+  await page.addInitScript(() => {
+    if (!sessionStorage.getItem('__nofamily')) {
+      localStorage.setItem('rihaan-math:v2:family-mode', 'false');
+      sessionStorage.setItem('__nofamily', '1');
+    }
+  });
 }
 
 /** The exact answer a student would type for quiz question i (same seed → same question as the app). */

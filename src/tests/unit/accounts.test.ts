@@ -52,3 +52,21 @@ describe('family accounts', () => {
     expect(addChild(a, 'Zoe').children.map((c) => c.name)).toEqual(['Ava', 'Zoe']);
   });
 });
+
+describe('moving a family to another device', () => {
+  it('a family code brings names, passcode, settings and progress to a fresh device', async () => {
+    const { exportAccount, importAccount } = await import('../../state/accounts');
+    const a = await createAccount({ parents: ['Mom'], children: ['Ava'], passcode: '97531' });
+    const s = loadChildSettings(a.children[0]!.id);
+    saveChildSettings(a.children[0]!.id, { ...s, session: { ...s.session, quizLength: 33 } });
+    const code = exportAccount(loadAccounts()[0]!);
+    localStorage.clear(); // "another device"
+    expect(await signInWith('Ava', '97531')).toBeNull();
+    expect(importAccount('not a code')).toBeNull();
+    const imported = importAccount(code);
+    expect(imported?.parents).toEqual(['Mom']);
+    const signedIn = await signInWith('Ava', '97531');
+    expect(signedIn?.signIn.role).toBe('CHILD');
+    expect(loadChildSettings(signedIn!.account.activeChildId).session.quizLength).toBe(33);
+  });
+});

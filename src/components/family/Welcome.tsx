@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../../app/AppContext';
-import { createAccount, loadAccounts, MAX_CHILDREN, MAX_PARENTS, signInWith, validateSignUp } from '../../state/accounts';
+import { createAccount, importAccount, loadAccounts, MAX_CHILDREN, MAX_PARENTS, signInWith, validateSignUp } from '../../state/accounts';
 import { isValidPasscode, MAX_PASSCODE_DIGITS } from '../../state/security';
 
 const digits = (v: string) => v.replace(/\D/g, '').slice(0, MAX_PASSCODE_DIGITS);
@@ -43,7 +43,7 @@ function NameList({ label, names, onChange, max, placeholder }: { label: string;
  */
 export function Welcome() {
   const { completeSignIn, setFamilyMode } = useApp();
-  const [tab, setTab] = useState<'in' | 'up'>(() => (loadAccounts().length === 0 ? 'up' : 'in'));
+  const [tab, setTab] = useState<'in' | 'up' | 'move'>(() => (loadAccounts().length === 0 ? 'up' : 'in'));
   const [name, setName] = useState('');
   const [pin, setPin] = useState('');
   const [parents, setParents] = useState<string[]>(['']);
@@ -52,6 +52,8 @@ export function Welcome() {
   const [newPin2, setNewPin2] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [code, setCode] = useState('');
+  const [notice, setNotice] = useState('');
 
   const doSignIn = async () => {
     if (busy) return;
@@ -96,9 +98,33 @@ export function Welcome() {
           <button type="button" role="tab" aria-selected={tab === 'up'} aria-pressed={tab === 'up'} onClick={() => (setTab('up'), setMessage(''))}>
             Sign up
           </button>
+          <button type="button" role="tab" aria-selected={tab === 'move'} aria-pressed={tab === 'move'} onClick={() => (setTab('move'), setMessage(''))}>
+            Add from another device
+          </button>
         </div>
 
-        {tab === 'in' ? (
+        {tab === 'move' ? (
+          <form
+            className="welcome-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const account = importAccount(code);
+              if (!account) return setMessage('That is not a Math Lab family code. Copy it again from 👪 Family on the other device.');
+              setCode('');
+              setTab('in');
+              setMessage('');
+              setNotice(`Family added: ${account.parents.join(', ')} and ${account.children.map((c) => c.name).join(', ')}. Sign in with your name and the family passcode.`);
+            }}
+          >
+            <label className="welcome-field">
+              <span>On the other device: 👪 Family → Copy family code. Paste it here.</span>
+              <textarea className="field family-code" value={code} onChange={(e) => setCode(e.target.value)} aria-label="Family code" rows={4} autoComplete="off" spellCheck={false} />
+            </label>
+            <button type="submit" className="brick big green" disabled={!code.trim()}>
+              Add family
+            </button>
+          </form>
+        ) : tab === 'in' ? (
           <form
             className="welcome-form"
             onSubmit={(e) => {
@@ -142,20 +168,25 @@ export function Welcome() {
           </form>
         )}
 
+        {notice && tab === 'in' ? (
+          <p className="feedback correct" role="status">
+            {notice}
+          </p>
+        ) : null}
         {message ? (
           <p className="feedback incorrect" role="alert">
             {message}
           </p>
         ) : null}
-        <p className="welcome-note">Accounts are saved only on this device. Grown-ups sign in to change settings; children sign in to play with their own settings.</p>
+        <p className="welcome-note">Grown-ups sign in to change settings; children sign in to play with their own settings. To use the same family on another iPad, iPhone, Mac or Chromebook, use “Add from another device”.</p>
         <button
           type="button"
           className="brick small ghost"
           onClick={() => {
-            if (globalThis.confirm('Turn off family mode? Math Lab goes back to one shared player on this device. Family accounts stay saved.')) setFamilyMode(false);
+            if (globalThis.confirm('Play without an account? Everyone shares one player on this device. You can turn family mode back on in Grown-ups → 👪 Family.')) setFamilyMode(false);
           }}
         >
-          Use without an account
+          Play without an account
         </button>
       </section>
     </div>

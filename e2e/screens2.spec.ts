@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { quizAnswer, setLevel, settingsWith, useSettings } from './helpers';
+import { quizAnswer, setLevel, settingsWith, useSettings, noFamily } from './helpers';
+
+test.beforeEach(async ({ page }) => {
+  await noFamily(page);
+});
 
 const OUT = process.env.SHOT_DIR;
 test.skip(!OUT, 'screenshots only when SHOT_DIR is set');

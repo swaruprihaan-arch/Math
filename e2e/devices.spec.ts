@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { settingsWith, useSettings } from './helpers';
+import { settingsWith, useSettings, noFamily } from './helpers';
+
+test.beforeEach(async ({ page }) => {
+  await noFamily(page);
+});
 
 const WIDE = new Set(['ipad-landscape', 'desktop', 'mac-safari']);
 
