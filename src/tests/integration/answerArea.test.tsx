@@ -69,3 +69,38 @@ describe('AnswerArea', () => {
     for (const raw of ['3/4', '1 5/12', '-2 1/3', '7']) expect(partsToRaw(rawToParts(raw))).toBe(raw);
   });
 });
+
+describe('AnswerArea: all three ways to answer are always there', () => {
+  function Three({ fraction, locked = false }: { fraction: boolean; locked?: boolean }) {
+    const question = fraction
+      ? generateFraction({ ...defaultFractionSettings(), operations: ['ADD'] }, createSeededRandom('frac3'))
+      : generateArithmetic({ ...defaultArithmeticSettings(), enabledOperations: ['MULTIPLY'], operandRange: { min: 20, max: 99 }, secondOperandRange: { min: 20, max: 99 } }, createSeededRandom('big'));
+    const [raw, setRaw] = useState('');
+    return (
+      <>
+        <AnswerArea question={question} raw={raw} onChange={setRaw} onSubmit={() => undefined} locked={locked} status="UNANSWERED" modes={['KEYPAD', 'WRITE', 'TALLY']} defaultMode="KEYPAD" keypadStyle="TALLY" />
+        <output data-testid="raw">{raw}</output>
+      </>
+    );
+  }
+
+  it('keypad, handwriting and tally buttons show for answers over 100', () => {
+    render(<Three fraction={false} />);
+    expect(screen.getByRole('button', { name: 'Number pad' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Write it' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Tally marks' })).toBeInTheDocument();
+  });
+
+  it('keypad, handwriting and tally buttons show for fractions, and tally fills the selected box', () => {
+    render(<Three fraction />);
+    fireEvent.click(screen.getByRole('button', { name: 'Tally marks' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tally mark 1' }));
+    expect(rawToParts(screen.getByTestId('raw').textContent ?? '').numerator).toBe('1');
+  });
+
+  it('the buttons stay on screen (disabled) after the answer is locked', () => {
+    render(<Three fraction={false} locked />);
+    expect(screen.getByRole('button', { name: 'Tally marks' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Write it' })).toBeDisabled();
+  });
+});

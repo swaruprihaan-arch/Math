@@ -13,7 +13,7 @@ export interface Worksheet {
 }
 
 export function buildWorksheet(plan: PracticePlan, code: string, count: number): Worksheet {
-  const n = Math.max(1, Math.min(60, Math.round(count)));
+  const n = Math.max(1, Math.min(200, Math.round(count)));
   const questions = Array.from({ length: n }, (_, i) => generateFromPlan(plan, createSeededRandom(deriveSeed(`WS:${code}`, i))));
   return { code, questions };
 }

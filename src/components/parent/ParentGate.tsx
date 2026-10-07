@@ -3,6 +3,7 @@ import { useApp } from '../../app/AppContext';
 import {
   createPasscode,
   isValidPasscode,
+  MAX_PASSCODE_DIGITS,
   loadLockout,
   loadPasscode,
   lockoutAfterFailure,
@@ -12,7 +13,7 @@ import {
   type PasscodeRecord,
 } from '../../state/security';
 
-function PinPad({ value, onChange, onEnter, maxLength = 8, label }: { value: string; onChange: (v: string) => void; onEnter: () => void; maxLength?: number; label: string }) {
+function PinPad({ value, onChange, onEnter, maxLength = MAX_PASSCODE_DIGITS, label }: { value: string; onChange: (v: string) => void; onEnter: () => void; maxLength?: number; label: string }) {
   return (
     <div>
       <div className="pin-dots" aria-label={`${value.length} digits entered`} role="status">
@@ -88,7 +89,7 @@ export function ParentGate() {
     if (busy) return;
     setMessage('');
     if (stage === 'create') {
-      if (!isValidPasscode(pin)) return setMessage('Use 4 to 8 digits.');
+      if (!isValidPasscode(pin)) return setMessage('Use 4 or more digits (numbers only).');
       setFirstPin(pin);
       setPin('');
       setStage('confirm');
@@ -129,7 +130,7 @@ export function ParentGate() {
     <section className="tile studded gate" aria-label="Grown-ups only">
       <h2>🔒 Grown-ups only</h2>
       <p>
-        {stage === 'create' && 'Make a passcode (4–8 digits) so only grown-ups can change the math.'}
+        {stage === 'create' && 'Make a passcode (4 or more digits, numbers only) so only grown-ups can change the math.'}
         {stage === 'confirm' && 'Type the same passcode again.'}
         {stage === 'enter' && 'Enter the passcode.'}
       </p>

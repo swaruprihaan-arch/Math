@@ -20,8 +20,11 @@ const KEY = 'parent-lock';
 const LOCKOUT_KEY = 'parent-lockout';
 export const ITERATIONS = 120_000;
 
+/** Longest passcode accepted (a sanity cap, far beyond what anyone types). */
+export const MAX_PASSCODE_DIGITS = 32;
+
 export function isValidPasscode(code: string): boolean {
-  return /^\d{4,8}$/.test(code);
+  return /^\d{4,}$/.test(code) && code.length <= MAX_PASSCODE_DIGITS;
 }
 
 function toHex(bytes: ArrayBuffer | Uint8Array): string {
@@ -50,7 +53,7 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 export async function createPasscode(passcode: string): Promise<{ record: PasscodeRecord }> {
-  if (!isValidPasscode(passcode)) throw new Error('Passcode must be 4 to 8 digits.');
+  if (!isValidPasscode(passcode)) throw new Error('Passcode must be 4 or more digits (numbers only).');
   const salt = toHex(randomBytes(16));
   const record: PasscodeRecord = { salt, iterations: ITERATIONS, hash: await deriveHash(passcode, salt) };
   return { record };

@@ -67,12 +67,10 @@ function typingTarget(): boolean {
 }
 
 export function AnswerArea({ question, raw, onChange, onSubmit, locked, status, modes: allowedModes, defaultMode, keypadStyle, keypadLayout = 'PHONE', writeDelayMs, keypadTop, speakButtons = false, voiceRate = 0.95, onTap, onModeChange }: Props) {
-  // Tally mode is offered only for whole-number answers up to 100.
+  // Every way to answer the grown-up turned on is always offered. Tally marks fill the whole answer, or the box
+  // that is selected in a fraction (whole / top / bottom); bigger whole numbers get more tally room.
   const tallyOk = tallyFits(question);
-  const modes = useMemo(() => {
-    const m = allowedModes.filter((x) => x !== 'TALLY' || tallyOk);
-    return m.length > 0 ? m : (['KEYPAD'] as InputMode[]);
-  }, [allowedModes, tallyOk]);
+  const modes = useMemo(() => (allowedModes.length > 0 ? [...allowedModes] : (['KEYPAD'] as InputMode[])), [allowedModes]);
   const [mode, setMode] = useState<InputMode>(defaultMode);
   const rowRef = useRef<HTMLDivElement | null>(null);
   // Latest answer for appending Scribble conversions (callbacks can fire after a re-render).
@@ -196,10 +194,10 @@ export function AnswerArea({ question, raw, onChange, onSubmit, locked, status, 
   }
 
   const modeSwitch =
-    modes.length > 1 && !locked ? (
+    modes.length > 1 ? (
       <div className="mode-switch" role="group" aria-label="How to answer">
         {modes.map((m) => (
-          <button key={m} type="button" className={`brick mode-btn ${MODE_INFO[m].color}`} aria-pressed={mode === m} onClick={() => setMode(m)} title={MODE_INFO[m].label} aria-label={MODE_INFO[m].label}>
+          <button key={m} type="button" className={`brick mode-btn ${MODE_INFO[m].color}`} aria-pressed={mode === m} disabled={locked} onClick={() => setMode(m)} title={MODE_INFO[m].label} aria-label={MODE_INFO[m].label}>
             {m === 'KEYPAD' ? <KeypadIcon /> : m === 'TALLY' ? <TallyIcon /> : <span className="icon">{m === 'WRITE' ? '✍️' : '⌨️'}</span>}
           </button>
         ))}
@@ -207,6 +205,10 @@ export function AnswerArea({ question, raw, onChange, onSubmit, locked, status, 
     ) : null;
 
   const symbols = symbolsForHandwriting(question);
+
+  // Tally marks: the whole answer, or the selected fraction box.
+  const tallyValue = fraction ? (/^\d+$/.test(parts[target]) ? Number(parts[target]) : 0) : /^\d+$/.test(raw) ? Number(raw) : 0;
+  const tallyMax = tallyOk || fraction ? 100 : 1000;
 
   let display: JSX.Element;
   if (fraction) {
@@ -305,12 +307,16 @@ export function AnswerArea({ question, raw, onChange, onSubmit, locked, status, 
       {modeSwitch}
       {mode === 'KEYPAD' ? keypadTop : null}
       {mode === 'KEYPAD' ? <Keypad extra={extra} onKey={applyKey} onEnter={() => onSubmit()} disabled={locked} keypadStyle={keypadStyle} layout={keypadLayout} hasInput={raw.trim() !== ''} /> : null}
-      {mode === 'TALLY' && tallyOk ? (
+      {mode === 'TALLY' ? (
         <TallyPad
-          value={/^\d+$/.test(raw) ? Number(raw) : 0}
-          onChange={(n) => onChange(n > 0 ? String(n) : '')}
+          value={tallyValue}
+          max={tallyMax}
+          onChange={(n) => {
+            if (fraction) setParts({ ...parts, [target]: n > 0 ? String(n) : '' });
+            else onChange(n > 0 ? String(n) : '');
+          }}
           disabled={locked}
-          resetKey={question.id}
+          resetKey={fraction ? `${question.id}-${target}` : question.id}
           onTap={onTap}
           voiceCount={speakButtons ? (n) => speak(String(n), voiceRate) : undefined}
         />

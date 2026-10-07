@@ -10,7 +10,7 @@ import { buildAnswerKey, buildWorksheet } from '../../pdf/worksheetBuilder';
 import { downloadQuizReport } from '../../pdf/reportPdf';
 import { accuracy, emptyProgress } from '../../state/progress';
 import { BUDDIES, defaultSettings, type Baseplate, type Celebration, type FontChoice, type InputMode, type KeypadLayout, type KeypadStyle, type ReaderLevel, type WriteSpeed } from '../../state/settings';
-import { createPasscode, isValidPasscode, loadPasscode, savePasscode, verifyPasscode } from '../../state/security';
+import { createPasscode, isValidPasscode, loadPasscode, MAX_PASSCODE_DIGITS, savePasscode, verifyPasscode } from '../../state/security';
 import { canSpeak, speak } from '../../ui/speech';
 import { MultiChips, NumberField, Segmented, Setting, Toggle } from '../common/Controls';
 import { MathView } from '../QuestionCard/MathView';
@@ -667,8 +667,10 @@ export function ProgressSection() {
 
 /* ------------------------------------------------------------------ */
 export function WorksheetSection() {
-  const { settings } = useApp();
-  const [count, setCount] = useState(12);
+  const { settings, updateSettings } = useApp();
+  // Worksheets have as many questions as a quiz (Session → Questions in a quiz); changing it here changes both.
+  const count = settings.session.quizLength;
+  const setCount = (quizLength: number) => updateSettings((s) => ({ ...s, session: { ...s.session, quizLength } }));
   const [code, setCode] = useState(() => generateNumericCode(4));
   const [codeInput, setCodeInput] = useState(code);
   const [withKey, setWithKey] = useState(true);
@@ -729,8 +731,8 @@ export function WorksheetSection() {
   return (
     <div>
       <div className="section-grid">
-        <Setting label="Questions" help="Uses the math chosen in the Math section.">
-          <NumberField label="How many" value={count} min={1} max={60} onChange={setCount} />
+        <Setting label="Questions" help="Same number of questions as a quiz (⏱ Session). Changing it here changes the quiz too. Uses the math chosen in the Math section.">
+          <NumberField label="How many" value={count} min={1} max={200} onChange={setCount} />
         </Setting>
         <Setting label="Worksheet number" help={isValidNumericCode(codeInput) ? 'The same number prints the same worksheet.' : 'Use 4 to 7 digits.'}>
           <div className="row">
@@ -807,15 +809,15 @@ export function LockSection() {
         <NumberField label="Minutes" value={settings.autoLockMinutes} min={1} max={120} onChange={(autoLockMinutes) => updateSettings((s) => ({ ...s, autoLockMinutes }))} />
       </Setting>
       <Setting label="Change passcode">
-        <input className="field" type="password" inputMode="numeric" placeholder="Current" value={current} onChange={(e) => setCurrent(e.target.value.replace(/\D/g, '').slice(0, 8))} aria-label="Current passcode" />
-        <input className="field" type="password" inputMode="numeric" placeholder="New (4–8 digits)" value={next} onChange={(e) => setNext(e.target.value.replace(/\D/g, '').slice(0, 8))} aria-label="New passcode" />
+        <input className="field" type="password" inputMode="numeric" placeholder="Current" value={current} onChange={(e) => setCurrent(e.target.value.replace(/\D/g, '').slice(0, MAX_PASSCODE_DIGITS))} aria-label="Current passcode" />
+        <input className="field" type="password" inputMode="numeric" placeholder="New (4+ digits, numbers only)" value={next} onChange={(e) => setNext(e.target.value.replace(/\D/g, '').slice(0, MAX_PASSCODE_DIGITS))} aria-label="New passcode" />
         <button
           type="button"
           className="brick small"
           onClick={async () => {
             const rec = loadPasscode();
             if (!rec || !(await verifyPasscode(current, rec))) return setMessage('Current passcode is wrong.');
-            if (!isValidPasscode(next)) return setMessage('Use 4 to 8 digits.');
+            if (!isValidPasscode(next)) return setMessage('Use 4 or more digits (numbers only).');
             const created = await createPasscode(next);
             savePasscode(created.record);
             setMessage('Passcode changed.');

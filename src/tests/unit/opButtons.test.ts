@@ -58,3 +58,22 @@ describe('new parent settings', () => {
     expect(s.look.simple).toBe(false);
   });
 });
+
+describe('passcode: 4 or more digits, numbers only', () => {
+  it('accepts 4+ digits and rejects letters or fewer than 4', async () => {
+    const { isValidPasscode } = await import('../../state/security');
+    expect(isValidPasscode('123')).toBe(false);
+    expect(isValidPasscode('1234')).toBe(true);
+    expect(isValidPasscode('123456789012')).toBe(true);
+    expect(isValidPasscode('12a45')).toBe(false);
+    expect(isValidPasscode('12 45')).toBe(false);
+  });
+});
+
+describe('worksheets match the quiz length', () => {
+  it('builds as many questions as asked, up to the quiz maximum', async () => {
+    const { buildWorksheet } = await import('../../pdf/worksheetBuilder');
+    expect(buildWorksheet(defaultPlan(), '1234', 25).questions).toHaveLength(25);
+    expect(buildWorksheet(defaultPlan(), '1234', 150).questions).toHaveLength(150);
+  });
+});
