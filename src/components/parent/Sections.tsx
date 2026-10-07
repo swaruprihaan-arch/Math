@@ -10,7 +10,7 @@ import { buildAnswerKey, buildWorksheet } from '../../pdf/worksheetBuilder';
 import { downloadQuizReport } from '../../pdf/reportPdf';
 import { accuracy } from '../../state/progress';
 import { BUDDIES, defaultSettings, type Baseplate, type Celebration, type FontChoice, type InputMode, type KeypadLayout, type KeypadStyle, type ReaderLevel, type WriteSpeed } from '../../state/settings';
-import { createPasscode, isValidPasscode, loadPasscode, MAX_PASSCODE_DIGITS, savePasscode, verifyPasscode } from '../../state/security';
+import { isValidPasscode, MAX_PASSCODE_DIGITS } from '../../state/security';
 import { canSpeak, speak } from '../../ui/speech';
 import { MultiChips, NumberField, Segmented, Setting, Toggle } from '../common/Controls';
 import { MathView } from '../QuestionCard/MathView';
@@ -794,7 +794,7 @@ export function WorksheetSection() {
 
 /* ------------------------------------------------------------------ */
 export function LockSection() {
-  const { settings, updateSettings, lockParent, hasPasscode, passcodeChanged, resetPasscode, resetProgress } = useApp();
+  const { settings, updateSettings, lockParent, hasPasscode, checkPasscode, setPasscode, resetPasscode, resetProgress, resetAllProgress, familyMode } = useApp();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [again, setAgain] = useState('');
@@ -820,14 +820,12 @@ export function LockSection() {
           type="button"
           className="brick small green"
           onClick={async () => {
-            const rec = loadPasscode();
-            if (rec && !(await verifyPasscode(current, rec))) return setMessage('Current passcode is wrong.');
+            const had = hasPasscode;
+            if (had && !(await checkPasscode(current))) return setMessage('Current passcode is wrong.');
             if (!isValidPasscode(next)) return setMessage('Use 4 or more digits (numbers only).');
             if (next !== again) return setMessage('The two new passcodes do not match.');
-            const created = await createPasscode(next);
-            savePasscode(created.record);
-            passcodeChanged();
-            setMessage(rec ? 'Passcode changed.' : 'Passcode saved. Use it to sign in next time.');
+            await setPasscode(next);
+            setMessage(had ? 'Passcode changed.' : 'Passcode saved. Use it to sign in next time.');
             setCurrent('');
             setNext('');
             setAgain('');
@@ -845,7 +843,8 @@ export function LockSection() {
           <button
             type="button"
             className="brick small red"
-            disabled={!hasPasscode}
+            disabled={!hasPasscode || familyMode}
+            title={familyMode ? 'A family account always has a passcode: change it above instead.' : undefined}
             onClick={() => {
               if (globalThis.confirm('Remove the passcode? This area will open without one until you make a new one.')) {
                 resetPasscode();
@@ -859,11 +858,22 @@ export function LockSection() {
             type="button"
             className="brick small red"
             onClick={() => {
-              if (globalThis.confirm('Erase all progress and quiz history on this device?')) resetProgress();
+              if (globalThis.confirm('Erase this child’s progress and quiz history?')) resetProgress();
             }}
           >
             🗑 Reset progress
           </button>
+          {familyMode ? (
+            <button
+              type="button"
+              className="brick small red"
+              onClick={() => {
+                if (globalThis.confirm('Erase progress for every child in the family?')) resetAllProgress();
+              }}
+            >
+              🗑 Reset every child’s progress
+            </button>
+          ) : null}
         </div>
       </Setting>
       <Setting label="Start over" help="Puts every setting back to the original. Progress is kept.">

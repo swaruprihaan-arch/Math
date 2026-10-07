@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useApp } from '../../app/AppContext';
-import { loadPasscode, verifyPasscode } from '../../state/security';
 import { PinPad } from '../parent/ParentGate';
 
 type Action = 'PASSCODE' | 'PROGRESS';
@@ -10,7 +9,7 @@ type Action = 'PASSCODE' | 'PROGRESS';
  * cannot wipe anything by accident.
  */
 export function ResetMenu() {
-  const { hasPasscode, resetPasscode, resetProgress } = useApp();
+  const { hasPasscode, resetPasscode, resetProgress, checkPasscode, familyMode } = useApp();
   const [open, setOpen] = useState(false);
   const [action, setAction] = useState<Action | null>(null);
   const [pin, setPin] = useState('');
@@ -42,9 +41,8 @@ export function ResetMenu() {
   };
 
   const confirmPin = async () => {
-    const rec = loadPasscode();
-    if (!rec || !action) return;
-    if (!(await verifyPasscode(pin, rec))) {
+    if (!action) return;
+    if (!(await checkPasscode(pin))) {
       setPin('');
       return setMessage('Wrong passcode.');
     }
@@ -67,7 +65,7 @@ export function ResetMenu() {
               </>
             ) : (
               <div className="reset-choices">
-                <button type="button" className="brick red" onClick={() => choose('PASSCODE')} disabled={!hasPasscode}>
+                <button type="button" className="brick red" onClick={() => choose('PASSCODE')} disabled={!hasPasscode || familyMode} title={familyMode ? 'Family accounts change the passcode in Grown-ups → Passcode' : undefined}>
                   🔑 Reset passcode
                 </button>
                 <button type="button" className="brick red" onClick={() => choose('PROGRESS')}>

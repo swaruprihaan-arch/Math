@@ -49,6 +49,9 @@ test('quiz: correct answers, strategies, score screen (answers computed from the
       expect(await tabs.count()).toBeGreaterThanOrEqual(2);
       await tabs.nth(1).click();
       await expect(ways.locator('.step').first()).toBeVisible();
+      // Ways to solve opens as its own full-screen page: close it to get back to the question.
+      await page.getByRole('button', { name: 'Close ways to solve' }).click();
+      await expect(ways).toBeHidden();
     }
     await page.getByRole('button', { name: 'Next ➜' }).click();
   }

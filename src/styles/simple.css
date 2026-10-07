@@ -238,3 +238,569 @@ body.simple .parent-head h1 {
   color: var(--ink);
   text-shadow: none;
 }
+
+/* ---------------------------------------------------------------------
+   Friendly-name hint (button held / hovered for a few seconds)
+   --------------------------------------------------------------------- */
+.hold-hint {
+  position: fixed;
+  z-index: 100;
+  transform: translate(-50%, calc(-100% - 10px));
+  max-width: min(80vw, 320px);
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: #111827;
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  animation: pop 0.2s ease-out;
+}
+
+/* ---------------------------------------------------------------------
+   Family mode: welcome (sign in / sign up), family tab, name pills
+   --------------------------------------------------------------------- */
+.welcome-screen {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+}
+
+.welcome-card {
+  width: min(520px, 100%);
+  text-align: center;
+}
+
+.welcome-card h1 {
+  font-family: var(--font-display);
+  margin: 0 0 14px;
+}
+
+.welcome-tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.welcome-tabs button {
+  flex: 1;
+  min-height: 48px;
+  font-size: 1.1rem;
+}
+
+.welcome-form {
+  display: grid;
+  gap: 12px;
+  text-align: left;
+}
+
+.welcome-field {
+  display: grid;
+  gap: 4px;
+  font-weight: 700;
+}
+
+.welcome-field .field,
+.name-row .field {
+  width: 100%;
+  min-height: 48px;
+  font-size: 1.1rem;
+}
+
+.name-list {
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.name-list legend {
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.name-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 6px 0;
+}
+
+.name-row .brick {
+  margin-top: 0;
+  flex: 0 0 auto;
+}
+
+.welcome-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.child-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.family-who {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin: 0 0 6px;
+}
+
+.kid-top .kid-name,
+.parent-head .child-badge {
+  min-height: 44px;
+  border: none;
+  font: inherit;
+  font-family: var(--font-display);
+  cursor: pointer;
+}
+
+/* =====================================================================
+   Fit the screen: no page scrolling on iPad, iPhone, Mac, Chromebook.
+   The kid screen fills exactly one screen height; the answer pad shrinks
+   to fit; tall content (tally bundles, strategies) scrolls inside its own
+   card instead of moving the whole page.
+   ===================================================================== */
+html,
+body {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+.kid-screen {
+  height: 100dvh;
+  max-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-top: max(8px, env(safe-area-inset-top));
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+.kid-screen > .kid-top {
+  flex: 0 0 auto;
+  padding-top: 0;
+}
+
+.kid-screen > .welcome-hint {
+  flex: 0 0 auto;
+  margin: 2px 0;
+  font-size: 0.9rem;
+}
+
+.kid-screen > .kid-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.kid-screen .kid-grid > .tile,
+.kid-screen .kid-grid > div {
+  margin: 8px 0;
+}
+
+/* Wide screens (iPad landscape, Mac, Chromebook): question left, answer right, each fits the height. */
+@media (min-width: 700px) and (orientation: landscape) {
+  .kid-screen .kid-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 460px);
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: 'q a';
+    align-items: stretch;
+    height: 100%;
+  }
+  .kid-screen .kid-grid.with-ways {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(340px, 420px);
+    grid-template-areas: 'q s a';
+  }
+  .kid-screen .kid-grid .question-tile {
+    position: static;
+    min-height: 0;
+    overflow: auto;
+  }
+  .kid-screen .kid-grid > div[style*='grid-area: s'] {
+    min-height: 0;
+    overflow: auto;
+  }
+  .kid-screen .kid-grid .answer-tile {
+    margin-top: 8px;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* Tall phones and iPad portrait: question on top (compact), answer below fills the rest. */
+@media not ((min-width: 700px) and (orientation: landscape)) {
+  .kid-screen .kid-grid {
+    display: flex;
+    flex-direction: column;
+  }
+  .kid-screen .kid-grid .question-tile {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: 34%;
+    overflow: auto;
+    padding-top: 44px;
+    padding-bottom: 10px;
+  }
+  .kid-screen .kid-grid .answer-tile {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+  }
+  .kid-screen .kid-grid > div[style*='grid-area: s'] {
+    position: fixed;
+    inset: auto 8px 8px 8px;
+    max-height: 70dvh;
+    overflow: auto;
+    z-index: 40;
+  }
+  .kid-screen .kid-grid .question-tile .math {
+    font-size: clamp(1.8rem, 7vw, 3rem);
+  }
+  .kid-screen .question-tile .hear-math {
+    margin: 6px auto;
+  }
+}
+
+/* Compact answer area: smaller gaps so the keypad fits short screens. */
+.kid-screen .answer-tile {
+  padding: 12px;
+}
+.kid-screen .answer-box {
+  min-height: 56px;
+  font-size: clamp(1.5rem, 4.5vh, 2.4rem);
+}
+.kid-screen .tally-strip {
+  min-height: 0;
+  margin-top: 2px;
+}
+.kid-screen .mode-switch {
+  margin: 8px 0 4px;
+}
+.kid-screen .mode-btn {
+  min-height: 46px;
+}
+.kid-screen .op-bar {
+  margin: 6px auto 0;
+}
+.kid-screen .op-btn {
+  min-height: 44px;
+}
+.kid-screen .keypad {
+  gap: clamp(6px, 1.2vh, 12px) 8px;
+  margin: 8px auto 2px;
+}
+.kid-screen .keypad .brick,
+.kid-screen .keypad.style-tally .brick,
+.kid-screen .keypad.style-both .brick {
+  min-height: clamp(44px, 7.2vh, 72px);
+  margin-top: 4px;
+}
+.kid-screen .actions {
+  margin: 8px 0 0;
+}
+.kid-screen .feedback {
+  min-height: 1.4em;
+  margin-top: 4px;
+  font-size: 1.25rem;
+}
+.kid-screen .brick.big {
+  min-height: 52px;
+}
+
+/* Handwriting and tally drawing pads scale with the screen height. */
+.kid-screen .hw-canvas {
+  height: clamp(130px, 26vh, 240px);
+}
+.kid-screen .tp-canvas {
+  height: clamp(130px, 26vh, 220px);
+}
+.kid-screen .tally-pad {
+  --tp-h: clamp(52px, 8vh, 80px);
+  gap: 6px;
+}
+.kid-screen .tp-modes .brick {
+  min-height: 46px;
+}
+/* Tap tally: the bundles scroll inside their own box instead of making the page scroll. */
+.kid-screen .tp-tap {
+  max-height: clamp(140px, 30vh, 320px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Very short screens (iPhone landscape, small Chromebooks): tighter still. */
+@media (max-height: 560px) {
+  .kid-screen .question-tile .math {
+    font-size: clamp(1.4rem, 7vh, 2.4rem);
+  }
+  .kid-screen .kid-buddy-spot,
+  .kid-screen > .welcome-hint {
+    display: none;
+  }
+  .kid-screen .question-tile.has-buddy {
+    padding-top: 12px;
+  }
+  .kid-screen .keypad .brick,
+  .kid-screen .keypad.style-tally .brick,
+  .kid-screen .keypad.style-both .brick {
+    min-height: 40px;
+    font-size: 1.2rem;
+  }
+  .kid-screen .key-tally svg {
+    height: 16px;
+  }
+  .kid-screen .key-badge {
+    font-size: 0.7rem;
+  }
+}
+
+/* Parent page: header and tabs stay put; only the settings panel scrolls (inside its card). */
+.parent-view {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-top: max(8px, env(safe-area-inset-top));
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+.parent-view > .parent-head,
+.parent-view > .parent-nav {
+  flex: 0 0 auto;
+}
+.parent-view > #parent-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 0;
+}
+.parent-view > .parent-nav {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.parent-view > .parent-nav::-webkit-scrollbar {
+  display: none;
+}
+.parent-view > .parent-nav .brick {
+  flex: 0 0 auto;
+}
+
+/* Grown-ups sign-in, welcome and reset dialogs fit short screens. */
+.welcome-screen {
+  height: 100dvh;
+  overflow-y: auto;
+}
+.gate {
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+}
+
+/* Apple Pencil / stylus: drawing never scrolls or zooms the page, and no long-press callout or text selection. */
+.hw-canvas,
+.tp-canvas {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Small phones (iPhone SE / mini): slimmer keypad, mode buttons and pads. */
+@media (max-width: 480px) and (max-height: 760px) {
+  .kid-screen .kid-grid .question-tile {
+    max-height: 26%;
+    padding-top: 36px;
+  }
+  .kid-screen .keypad .brick,
+  .kid-screen .keypad.style-tally .brick,
+  .kid-screen .keypad.style-both .brick {
+    min-height: 44px;
+    font-size: 1.25rem;
+  }
+  .kid-screen .key-tally svg,
+  .kid-screen .key-both .tally {
+    height: 14px;
+  }
+  .kid-screen .mode-btn,
+  .kid-screen .op-btn,
+  .kid-screen .tp-modes .brick {
+    min-height: 44px;
+  }
+  .kid-screen .answer-box {
+    min-height: 48px;
+  }
+  .kid-screen .hw-canvas,
+  .kid-screen .tp-canvas {
+    height: clamp(110px, 22vh, 160px);
+  }
+  .kid-screen .tp-tap {
+    max-height: 22vh;
+  }
+}
+
+/* Phone landscape: question, then answer box + keypad side by side; mode buttons in a column. */
+@media (max-height: 480px) and (orientation: landscape) {
+  .kid-screen {
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
+  }
+  .kid-screen .kid-top .brick,
+  .kid-screen .kid-top .pill {
+    min-height: 40px;
+  }
+  .kid-screen .kid-top .icon-brick {
+    width: 44px;
+  }
+  .kid-screen .kid-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  }
+  .kid-screen .answer-tile {
+    padding: 8px;
+  }
+  .kid-screen .answer-area {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'box modes'
+      'ops ops'
+      'pad pad';
+    gap: 4px 8px;
+    align-items: center;
+  }
+  .kid-screen .answer-area > .answer-row { grid-area: box; }
+  .kid-screen .answer-area > .tally-strip { display: none; }
+  .kid-screen .answer-area > .mode-switch { grid-area: modes; margin: 0; }
+  .kid-screen .answer-area > .op-bar { grid-area: ops; margin: 0 auto; }
+  .kid-screen .answer-area > :is(div:has(> .keypad), .tally-pad, .hw-wrap) { grid-area: pad; }
+  .kid-screen .mode-btn {
+    min-width: 44px;
+    min-height: 40px;
+    padding: 0.2em 0.4em;
+  }
+  .kid-screen .op-btn {
+    min-height: 36px;
+    font-size: 1.3rem;
+  }
+  .kid-screen .answer-box {
+    min-height: 44px;
+    font-size: 1.5rem;
+  }
+  .kid-screen .keypad {
+    grid-template-columns: repeat(6, minmax(40px, 1fr));
+    gap: 6px;
+    max-width: none;
+    margin: 4px 0 0;
+  }
+  .kid-screen .keypad .brick,
+  .kid-screen .keypad.style-tally .brick,
+  .kid-screen .keypad.style-both .brick {
+    min-height: 40px;
+    margin-top: 2px;
+  }
+  .kid-screen .keypad .zero {
+    grid-column: span 1;
+  }
+  .kid-screen .keypad .enter {
+    grid-row: span 1;
+  }
+  .kid-screen .hw-canvas,
+  .kid-screen .tp-canvas {
+    height: clamp(90px, 34vh, 140px);
+  }
+  .kid-screen .tp-tap {
+    max-height: 34vh;
+  }
+  .kid-screen .actions {
+    margin-top: 4px;
+  }
+}
+
+/* =====================================================================
+   Opened things fill the screen like their own page (every device):
+   💡 Ways to solve, ↺ Reset, grown-ups sign-in.
+   ===================================================================== */
+.kid-screen .kid-grid > div[style*='grid-area: s'] {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 60;
+  max-height: none !important;
+  margin: 0 !important;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: color-mix(in srgb, var(--plate) 12%, #f5f7fb);
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  animation: page-in 0.22s ease-out;
+}
+body.baseplate-NIGHT .kid-screen .kid-grid > div[style*='grid-area: s'] {
+  background: #151b24;
+}
+.kid-screen .kid-grid > div[style*='grid-area: s'] > .tile {
+  max-width: 980px;
+  min-height: calc(100dvh - 24px);
+  margin: 0 auto;
+}
+.kid-screen .kid-grid > div[style*='grid-area: s'] .strategy-close {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  min-height: 52px;
+  font-size: 1.1rem;
+}
+/* With ways open, the grid itself stays two columns underneath. */
+@media (min-width: 700px) and (orientation: landscape) {
+  .kid-screen .kid-grid.with-ways {
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 460px);
+    grid-template-areas: 'q a';
+  }
+}
+
+.reset-backdrop {
+  padding: 0;
+  background: color-mix(in srgb, var(--plate) 12%, #f5f7fb);
+  animation: page-in 0.22s ease-out;
+}
+.reset-menu {
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: 100dvh;
+  border-radius: 0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+}
+.reset-menu > * {
+  width: min(420px, 100%);
+}
+
+.app:has(> .gate) {
+  height: 100dvh;
+  display: grid;
+  place-items: center;
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

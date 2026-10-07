@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { KidView } from '../components/kid/KidView';
 import { ParentView } from '../components/parent/ParentView';
+import { Welcome } from '../components/family/Welcome';
+import { HoldHint } from '../components/common/HoldHint';
 import { AppProvider, useApp } from './AppContext';
 import { BASEPLATES, THEMES, themeVariables } from './theme';
 import { useSession } from './useSession';
@@ -40,6 +42,21 @@ function ThemeEffect() {
 }
 
 function Screens() {
+  const { familyMode, signIn } = useApp();
+  if (familyMode && !signIn) {
+    return (
+      <>
+        <ThemeEffect />
+        <main>
+          <Welcome />
+        </main>
+      </>
+    );
+  }
+  return <SignedInScreens />;
+}
+
+function SignedInScreens() {
   const route = useHashRoute();
   const session = useSession();
   const { lockParent } = useApp();
@@ -59,6 +76,7 @@ export function App() {
   return (
     <AppProvider>
       <Screens />
+      <HoldHint />
     </AppProvider>
   );
 }

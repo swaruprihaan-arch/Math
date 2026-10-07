@@ -7,6 +7,7 @@ import { MathSection } from './MathSection';
 import { ParentGate } from './ParentGate';
 import { AnswersSection, ChildSection, FunSection, LockSection, LookSection, ProgressSection, SessionSection, WorksheetSection } from './Sections';
 import { StartSection } from './StartSection';
+import { FamilySection } from '../family/FamilySection';
 import { prewarmStrategyCatalog, StrategiesSection } from './StrategiesSection';
 
 const TABS = [
@@ -21,10 +22,21 @@ const TABS = [
   { id: 'progress', label: '📈 Progress', color: 'red' },
   { id: 'worksheets', label: '🖨 Worksheets', color: 'blue' },
   { id: 'child', label: '🧒 Child', color: 'lime' },
+  { id: 'family', label: '👪 Family', color: 'purple' },
   { id: 'lock', label: '🔒 Passcode', color: 'white' },
 ] as const;
 
 export type ParentTab = (typeof TABS)[number]['id'];
+
+function ChildBadge() {
+  const { familyMode, activeChild, account } = useApp();
+  if (!familyMode || !activeChild || !account) return null;
+  return (
+    <span className="pill child-badge" title="Settings below are for this child (change in 👪 Family)">
+      🧒 {activeChild.name}
+    </span>
+  );
+}
 
 export function ParentView({ session }: { session?: Session }) {
   const { parentUnlocked } = useApp();
@@ -100,6 +112,8 @@ export function ParentView({ session }: { session?: Session }) {
         return <WorksheetSection />;
       case 'child':
         return <ChildSection />;
+      case 'family':
+        return <FamilySection />;
       case 'lock':
         return <LockSection />;
     }
@@ -109,6 +123,7 @@ export function ParentView({ session }: { session?: Session }) {
     <div className="app parent-view">
       <div className="parent-head">
         <h1>Grown-ups</h1>
+        <ChildBadge />
         <span className="spacer" />
         <a href="#/" className="brick green">
           ▶ Back to math

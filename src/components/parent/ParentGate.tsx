@@ -1,14 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useApp } from '../../app/AppContext';
-import {
-  MAX_PASSCODE_DIGITS,
-  loadLockout,
-  loadPasscode,
-  lockoutAfterFailure,
-  saveLockout,
-  verifyPasscode,
-  type PasscodeRecord,
-} from '../../state/security';
+import { loadLockout, lockoutAfterFailure, MAX_PASSCODE_DIGITS, saveLockout } from '../../state/security';
 
 export function PinPad({ value, onChange, onEnter, maxLength = MAX_PASSCODE_DIGITS, label }: { value: string; onChange: (v: string) => void; onEnter: () => void; maxLength?: number; label: string }) {
   return (
@@ -56,8 +48,7 @@ export function PinPad({ value, onChange, onEnter, maxLength = MAX_PASSCODE_DIGI
  * open; the passcode is made in 🔒 Passcode). "Forgot passcode?" can remove it after a confirmation.
  */
 export function ParentGate() {
-  const { unlockParent, resetPasscode } = useApp();
-  const [record] = useState<PasscodeRecord | null>(() => loadPasscode());
+  const { unlockParent, resetPasscode, checkPasscode, familyMode, signIn } = useApp();
   const [pin, setPin] = useState('');
   const [showForgot, setShowForgot] = useState(false);
   const [message, setMessage] = useState('');
@@ -74,11 +65,11 @@ export function ParentGate() {
   const lockedFor = Math.max(0, Math.ceil((lockout.lockedUntil - now) / 1000));
 
   const submit = async () => {
-    if (busy || !record) return;
+    if (busy) return;
     setMessage('');
     if (lockedFor > 0) return;
     setBusy(true);
-    const ok = await verifyPasscode(pin, record);
+    const ok = await checkPasscode(pin);
     setBusy(false);
     setPin('');
     if (ok) {
@@ -98,13 +89,15 @@ export function ParentGate() {
   return (
     <section className="tile studded gate" aria-label="Grown-ups only">
       <h2>🔒 Grown-ups only</h2>
-      <p>Enter the passcode to sign in.</p>
+      <p>{familyMode ? `Hi ${signIn?.name ?? ''}! A grown-up enters the family passcode to open this area.` : 'Enter the passcode to sign in.'}</p>
       {lockedFor > 0 ? <p className="notice">Too many tries. Wait {lockedFor} s.</p> : null}
       <PinPad value={pin} onChange={setPin} onEnter={() => void submit()} label="Passcode" />
-      <button type="button" className="brick small ghost" onClick={() => setShowForgot((v) => !v)} aria-expanded={showForgot}>
-        Forgot passcode?
-      </button>
-      {showForgot ? (
+      {!familyMode ? (
+        <button type="button" className="brick small ghost" onClick={() => setShowForgot((v) => !v)} aria-expanded={showForgot}>
+          Forgot passcode?
+        </button>
+      ) : null}
+      {showForgot && !familyMode ? (
         <div className="notice">
           <p>Reset the passcode to open the grown-ups area again. Settings and progress are kept. You can make a new passcode in 🔒 Passcode.</p>
           <button

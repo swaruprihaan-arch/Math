@@ -32,7 +32,7 @@ const OP_SYMBOLS = { ADD: '+', SUBTRACT: '−', MULTIPLY: '×', DIVIDE: '÷' } a
 const OP_NAMES = { ADD: 'Adding', SUBTRACT: 'Taking away', MULTIPLY: 'Times', DIVIDE: 'Sharing (divide)' } as const;
 
 export function KidView({ session }: { session: Session }) {
-  const { settings, hasPasscode } = useApp();
+  const { settings, hasPasscode, familyMode, activeChild, signOut } = useApp();
   const { q, quiz, timer, now, startQuiz } = session;
   const { fun, child } = settings;
   const rainbow = !!THEMES[settings.look.theme]?.rainbow;
@@ -235,6 +235,11 @@ export function KidView({ session }: { session: Session }) {
           <span aria-hidden="true">{session.streak}</span>
         </span>
       ) : null}
+      {familyMode && activeChild ? (
+        <button type="button" className="pill kid-name" title="Sign out" aria-label={`${activeChild.name}: sign out`} onClick={() => globalThis.confirm('Sign out?') && signOut()}>
+          🧒 {activeChild.name}
+        </button>
+      ) : null}
       <ResetMenu />
       <a href="#/parent" className="brick white icon-brick kid-lock" aria-label="Grown-ups area (locked)" title="Grown-ups">
         🔒
@@ -295,7 +300,7 @@ export function KidView({ session }: { session: Session }) {
   return (
     <div className="app kid-screen">
       {header}
-      {!hasPasscode ? <p className="welcome-hint">👋 Grown-ups: tap 🔒 to choose the math.</p> : null}
+      {!hasPasscode && !familyMode ? <p className="welcome-hint">👋 Grown-ups: tap 🔒 to choose the math.</p> : null}
       {session.error ? (
         <div className="tile notice" role="alert">
           {session.error}

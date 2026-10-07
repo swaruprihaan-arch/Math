@@ -547,7 +547,7 @@ describe('ParentView', () => {
       </>,
     );
     const tabs = screen.getAllByRole('tab');
-    expect(tabs.map((t) => t.textContent)).toEqual(['🏠 Start', '🧮 Math', '🎓 Grade Level Math', '⏱ Session', '✍️ Answers', '🧩 Strategies', '🎨 Look', '🎉 Fun', '📈 Progress', '🖨 Worksheets', '🧒 Child', '🔒 Passcode']);
+    expect(tabs.map((t) => t.textContent)).toEqual(['🏠 Start', '🧮 Math', '🎓 Grade Level Math', '⏱ Session', '✍️ Answers', '🧩 Strategies', '🎨 Look', '🎉 Fun', '📈 Progress', '🖨 Worksheets', '🧒 Child', '👪 Family', '🔒 Passcode']);
     expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tabpanel', { name: '🏠 Start' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '📝 Start quiz' })).toBeInTheDocument();
