@@ -1,0 +1,756 @@
+/* =====================================================================
+   Parent area extras: 🏠 Start cards, 🧩 Strategies chips and the new
+   personalisation controls. Uses the tokens from bricks.css only, so the
+   Night baseplate and high contrast keep working.
+   ===================================================================== */
+
+/* ---------- Text colours that stay readable on every baseplate ---------- */
+.parent-view {
+  /* 4.5:1 or better on the white tiles (bricks.css --warn is too light for small text). */
+  --px-good-ink: #00852b;
+  --px-warn-ink: #9a5200;
+  --px-bad-ink: #c00d10;
+}
+
+/* Night baseplate: the tiles are dark, so text colours get lighter. */
+body.baseplate-NIGHT .parent-view {
+  --px-good-ink: #4ade80;
+  --px-warn-ink: #fbbf24;
+  --px-bad-ink: #ff8a8a;
+}
+
+/* ---------- Touch-friendly parent controls (iPad / phones) ---------- */
+@media (pointer: coarse) {
+  .parent-view .segmented button,
+  .parent-view .brick.small,
+  .parent-view .field {
+    min-height: 48px;
+  }
+  .parent-view .segmented button,
+  .parent-view .brick.small {
+    min-width: 48px;
+  }
+  .parent-view .swatch {
+    width: 48px;
+    height: 44px;
+  }
+  .parent-view .toggle {
+    min-height: 48px;
+  }
+  .parent-view input[type='range'] {
+    min-height: 44px;
+  }
+}
+
+/* iOS Safari zooms into any field under 16px (Text size S makes 1rem = 14.4px). Low specificity, so
+   fields that set their own (bigger) size keep it. */
+:where(.parent-view) :where(input.field, textarea.field) {
+  font-size: max(16px, 1rem);
+}
+
+.parent-view .parent-nav .brick {
+  touch-action: manipulation;
+}
+
+/* Focus rings use the text colour, which is dark on light baseplates and light on Night, so they show on both. */
+.parent-view .parent-nav .brick:focus-visible,
+.parent-view .strat-chip:focus-visible,
+.parent-view .strat-group-head:focus-visible,
+.parent-view .start-go:focus-visible,
+.parent-view .start-change:focus-visible {
+  outline: 4px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.parent-view .swatch[aria-pressed='true'] {
+  outline-color: var(--ink);
+}
+
+/* Buttons that stay focusable when there is nothing to do (aria-disabled instead of disabled). */
+.parent-view .brick[aria-disabled='true'] {
+  filter: grayscale(0.65) opacity(0.55);
+  cursor: default;
+}
+
+.parent-view .brick[aria-disabled='true']:active {
+  transform: none;
+}
+
+/* The panel gets focus after a "Change" / "Go to Start" link; it is a landing spot, not a control. */
+#parent-panel {
+  scroll-margin-top: 24px;
+}
+
+#parent-panel:focus {
+  outline: none;
+}
+
+/* ---------- Session → Start pointer ---------- */
+.start-pointer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  margin: 0 0 14px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border-left: 6px solid var(--b-green);
+  background: var(--tile-2);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.start-pointer .brick {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+/* =====================================================================
+   🏠 Start
+   ===================================================================== */
+.start-section {
+  display: grid;
+  gap: 18px;
+}
+
+.start-now {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.now-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 6px 16px;
+  border-radius: 10px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: #fff;
+  box-shadow:
+    inset 0 -4px 0 rgba(0, 0, 0, 0.22),
+    0 3px 0 rgba(0, 0, 0, 0.25);
+}
+
+.now-badge.practice {
+  background: var(--b-green);
+}
+
+.now-badge.quiz {
+  background: var(--b-blue);
+}
+
+.start-now .help {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.start-cards {
+  display: grid;
+  gap: 26px 18px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  align-items: stretch;
+  margin-top: 10px;
+}
+
+.start-card {
+  --card: var(--b-green);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding: 18px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--card) 9%, var(--tile));
+  border: 4px solid color-mix(in srgb, var(--card) 55%, transparent);
+  box-shadow:
+    0 6px 0 color-mix(in srgb, var(--card) 45%, #000 20%),
+    0 12px 22px rgba(0, 0, 0, 0.12);
+}
+
+/* Studs on top: the card is a big brick. */
+.start-card::before {
+  content: '';
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  top: -14px;
+  height: 12px;
+  background: radial-gradient(circle at 50% 75%, color-mix(in srgb, var(--card) 80%, #fff) 0 7px, color-mix(in srgb, var(--card) 70%, #000) 7.5px 8.5px, transparent 9px) center 0 / 30px 13px repeat-x;
+  pointer-events: none;
+}
+
+.start-card.quiz {
+  --card: var(--b-blue);
+}
+
+.start-card.active {
+  border-color: var(--card);
+  border-width: 5px;
+}
+
+.start-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.start-card-head h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  line-height: 1.1;
+}
+
+.start-emoji {
+  display: inline-grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  font-size: 2rem;
+  background: var(--card);
+  box-shadow:
+    inset 0 -5px 0 rgba(0, 0, 0, 0.22),
+    0 3px 0 rgba(0, 0, 0, 0.25);
+}
+
+.start-on {
+  margin-left: auto;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--card);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.start-blurb {
+  margin: 0;
+  font-weight: 600;
+}
+
+.start-facts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.start-continue {
+  display: grid;
+  gap: 6px;
+  max-width: 520px;
+}
+
+.start-continue .start-go {
+  margin-top: 0;
+}
+
+.start-continue .help {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.start-field {
+  display: grid;
+  /* One column that never grows past the card, so the quiz-number row shrinks instead of spilling out (360px phones). */
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--tile);
+  border: 2px solid color-mix(in srgb, var(--edge) 10%, transparent);
+}
+
+.start-field-label {
+  font-weight: 800;
+}
+
+.start-field .help {
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+
+.start-code-row {
+  flex-wrap: nowrap;
+  max-width: 100%;
+}
+
+.start-code-row .brick {
+  flex: 0 0 auto;
+}
+
+.start-code {
+  flex: 0 1 9em;
+  width: 9em;
+  min-width: 0;
+  font-size: 1.2rem;
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Narrow phones: all 7 digits still fit next to the 🎲 and ✗ buttons. */
+@media (max-width: 420px) {
+  .start-code {
+    letter-spacing: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .start-code::placeholder {
+    font-size: 0.78rem;
+  }
+}
+
+.start-code::placeholder {
+  font-size: 0.95rem;
+  letter-spacing: normal;
+}
+
+.start-code[aria-invalid='true'] {
+  border-color: var(--bad);
+}
+
+.start-warn,
+.start-field .help.start-warn {
+  color: var(--px-bad-ink);
+  font-weight: 800;
+}
+
+.start-alert {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #ffd6d6;
+  color: #7a0000;
+  font-weight: 800;
+}
+
+.start-go {
+  width: 100%;
+  margin-top: auto;
+  min-height: 68px;
+  font-size: 1.45rem;
+}
+
+.start-summary {
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--tile-2);
+}
+
+.start-summary h3 {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+}
+
+.start-glance {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+
+.start-glance > div {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--tile);
+}
+
+.start-glance dt {
+  font-weight: 800;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.start-glance dd {
+  margin: 4px 0 0;
+  font-weight: 700;
+}
+
+.start-math {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 2px;
+}
+
+.start-change {
+  margin-top: 14px;
+}
+
+/* =====================================================================
+   🧩 Strategies
+   ===================================================================== */
+.strat-section {
+  display: grid;
+  gap: 16px;
+}
+
+.strat-toolbar {
+  display: grid;
+  gap: 10px;
+}
+
+.strat-intro h3 {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+}
+
+.strat-intro .help {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.strat-controls .pill {
+  font-weight: 800;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--edge) 15%, transparent);
+}
+
+.strat-controls .brick {
+  margin-top: 0;
+}
+
+.strat-search {
+  flex: 1 1 220px;
+  min-width: 0;
+  max-width: 360px;
+  font-size: max(16px, 1rem);
+}
+
+.strat-groups {
+  display: grid;
+  gap: 10px;
+}
+
+.strat-group {
+  border-radius: 14px;
+  background: var(--tile-2);
+  border: 3px solid transparent;
+}
+
+.strat-group.open {
+  border-color: color-mix(in srgb, var(--b-purple) 40%, transparent);
+}
+
+.strat-group-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.strat-group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.strat-group-head[aria-disabled='true'] {
+  cursor: default;
+}
+
+.strat-chevron {
+  width: 1em;
+  flex: 0 0 auto;
+}
+
+.strat-group-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.strat-count {
+  flex: 0 0 auto;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--tile);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--px-good-ink);
+}
+
+.strat-count.some-off {
+  color: var(--px-warn-ink);
+}
+
+.strat-panel {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding: 2px 14px 14px;
+}
+
+.strat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.strat-chip {
+  --chip: var(--b-green);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  max-width: 100%;
+  padding: 8px 14px;
+  border: 2px solid color-mix(in srgb, var(--chip) 70%, #000 10%);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--chip) 14%, var(--tile));
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+  box-shadow:
+    inset 0 -4px 0 color-mix(in srgb, var(--chip) 30%, transparent),
+    0 3px 0 rgba(0, 0, 0, 0.18);
+  transition:
+    transform 0.06s ease,
+    box-shadow 0.06s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.strat-chip:active {
+  transform: translateY(2px);
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--chip) 30%, transparent);
+}
+
+.strat-chip .strat-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  border-radius: 7px;
+  background: var(--chip);
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.strat-chip.off {
+  --chip: #8b929c;
+  border-style: dashed;
+  background: var(--tile);
+  color: var(--muted);
+  box-shadow: none;
+}
+
+.strat-chip.off > span:last-child {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+/* =====================================================================
+   ✍️ Answers — keypad order picture
+   ===================================================================== */
+.keypad-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.keypad-choice small {
+  display: block;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.keypad-preview {
+  display: inline-grid;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.keypad-preview-row {
+  display: flex;
+  gap: 2px;
+}
+
+.keypad-preview-key {
+  display: inline-grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 3px;
+  background: color-mix(in srgb, currentColor 18%, transparent);
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* =====================================================================
+   🎨 Look — own colour
+   ===================================================================== */
+.swatches-muted .swatch {
+  opacity: 0.55;
+}
+
+.color-pick {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.color-pick input[type='color'] {
+  width: 64px;
+  height: 48px;
+  padding: 2px;
+  border: 2px solid color-mix(in srgb, var(--edge) 25%, transparent);
+  border-radius: 10px;
+  background: var(--tile);
+  cursor: pointer;
+}
+
+.color-pick-sample {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  box-shadow:
+    inset 0 -4px 0 rgba(0, 0, 0, 0.22),
+    0 3px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* =====================================================================
+   🎉 Fun — buddy, cheers
+   ===================================================================== */
+.buddy-picker .brick {
+  font-size: 1.5rem;
+  min-width: 52px;
+  min-height: 52px;
+}
+
+.buddy-picker .buddy-none {
+  font-size: 1rem;
+}
+
+.buddy-picker .brick[aria-pressed='true'] {
+  outline: 4px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.cheers-setting {
+  grid-column: 1 / -1;
+}
+
+.cheers-sub {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.cheers-field {
+  width: 100%;
+  min-height: 7.5em;
+  resize: vertical;
+  font: inherit;
+  font-size: max(16px, 1rem);
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.cheers-warn {
+  display: block;
+}
+
+.cheers-setting code {
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--tile);
+  font-weight: 800;
+}
+
+.cheer-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.cheer-preview .brick {
+  margin-top: 0;
+}
+
+.cheer-bubble {
+  display: inline-block;
+  max-width: 100%;
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  box-shadow:
+    inset 0 -5px 0 rgba(0, 0, 0, 0.2),
+    0 3px 0 rgba(0, 0, 0, 0.22);
+}
+
+body.theme-white .cheer-bubble {
+  background: #111827;
+  color: #fff;
+}
+
+/* =====================================================================
+   🎉 Fun — read-aloud switches locked by 🧒 Child → Can your child read?
+   ===================================================================== */
+.toggle-locked {
+  cursor: default;
+  opacity: 0.75;
+}
+
+.read-locked {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border-left: 5px solid var(--b-lime);
+  background: var(--tile);
+  font-weight: 600;
+}
+
+.read-locked .brick {
+  margin-top: 0;
+}

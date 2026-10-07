@@ -1,0 +1,510 @@
+/* ---------------------------------------------------------------------
+   Tap to count: pictures (VisualView) and brick models (BrickModel) the
+   child taps to count. Each counted thing gets a numbered stud badge.
+   Loaded by components/QuestionCard/VisualView.tsx.
+   --------------------------------------------------------------------- */
+
+.visual.counting,
+.model.counting {
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  /* Kids press and hold: no text selection or iOS callout on the count studs, signs or hint. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+.count-stage {
+  display: flex;
+  justify-content: center;
+  max-width: 100%;
+}
+
+/* ---- The tappable thing (reset of the native button) ---- */
+.count-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.12s ease,
+    background-color 0.15s ease;
+}
+
+.count-item:active {
+  transform: scale(0.92);
+}
+
+.count-item.counted {
+  cursor: default;
+}
+
+.count-item.counted:active {
+  transform: none;
+}
+
+.count-face {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.count-item.counted .count-face {
+  animation: count-hop 0.45s cubic-bezier(0.3, 1.6, 0.6, 1);
+}
+
+/* ---- Number badge: a round brick stud ---- */
+.count-badge {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  z-index: 2;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: 999px;
+  border: 2px solid var(--edge);
+  background: var(--b-yellow);
+  color: #1a1a1a;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow:
+    inset 0 -3px 0 rgba(0, 0, 0, 0.18),
+    inset 0 2px 0 rgba(255, 255, 255, 0.55),
+    0 2px 0 rgba(0, 0, 0, 0.25);
+  animation: count-pop 0.38s cubic-bezier(0.3, 1.6, 0.6, 1);
+}
+
+/* ---- Emoji objects and array cells: little raised tiles ---- */
+.object-group.count-grid,
+.array-grid.count-grid,
+.count-grid {
+  --gap: 9px;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 5), minmax(0, var(--count-size, 54px)));
+  gap: var(--gap);
+  justify-content: center;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+}
+
+.array-grid.count-grid {
+  --count-size: 52px;
+  --gap: 7px;
+  padding: 5px;
+}
+
+/* Every pixel of a grid is tappable: each cell's hit area reaches halfway into the gaps around it,
+   so a cell squeezed on a narrow screen still gets the cell + gap as its target. */
+.count-grid > .count-item::before {
+  content: '';
+  position: absolute;
+  inset: calc(var(--gap) / -2);
+}
+
+@media (max-width: 640px) {
+  .array-grid.count-grid,
+  .count-grid.count-studgrid {
+    --gap: 5px;
+  }
+}
+
+.count-thing {
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  background: var(--tile);
+  box-shadow:
+    inset 0 -4px 0 rgba(0, 0, 0, 0.1),
+    0 2px 0 rgba(0, 0, 0, 0.18);
+}
+
+.count-thing.counted {
+  background: color-mix(in srgb, var(--b-yellow) 30%, var(--tile));
+  box-shadow:
+    inset 0 0 0 3px var(--b-yellow),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Dense grids (big arrays on a phone): emoji and badges shrink with the cell. */
+.count-thing,
+.count-grid .count-stud {
+  container-type: inline-size;
+}
+
+.count-thing .count-face {
+  font-size: min(1em, 64cqi);
+}
+
+/* Badges keep a readable floor and overflow a small cell rather than shrinking further. */
+.count-thing .count-badge,
+.count-grid .count-stud .count-badge {
+  top: clamp(-9px, -18cqi, -6px);
+  right: clamp(-9px, -18cqi, -6px);
+  min-width: clamp(24px, 54cqi, 28px);
+  height: clamp(24px, 54cqi, 28px);
+  padding: 0 clamp(3px, 10cqi, 6px);
+  font-size: clamp(0.8rem, 34cqi, 0.95rem);
+  border-width: 2px;
+}
+
+/* ---- Coins ---- */
+.counting .coins {
+  gap: 14px;
+}
+
+.coins .count-coin {
+  padding: 3px;
+  border-radius: 50%;
+}
+
+.coins .count-coin.bill {
+  border-radius: 10px;
+}
+
+.count-coin svg {
+  display: block;
+}
+
+.count-coin.counted {
+  box-shadow: 0 0 0 4px var(--b-yellow);
+}
+
+/* ---- Fraction bricks: buttons laid over the shaded bricks ---- */
+.count-fraction {
+  position: relative;
+  max-width: 100%;
+}
+
+.count-fraction svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.count-part {
+  position: absolute;
+  border-radius: 8px;
+}
+
+/* A white ring round the counted brick (not over its studs); no tint, so it never looks "unshaded". */
+.count-part.counted::after {
+  content: '';
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  top: 17%;
+  bottom: 2%;
+  border-radius: 6px;
+  box-shadow:
+    inset 0 0 0 3px #ffffff,
+    0 0 0 2px var(--edge);
+  pointer-events: none;
+}
+
+/* Centred on its part, and never wider than it (twelfths on a phone are narrow). */
+.count-part .count-badge {
+  top: calc(50% - 10px);
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  width: min(28px, 94%);
+  min-width: 0;
+  padding: 0;
+}
+
+/* ---- Brick model studs ---- */
+.count-studs {
+  display: grid;
+  gap: 10px;
+}
+
+.count-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: calc(10 * 44px + 9 * 6px);
+}
+
+.count-stud,
+.count-slot {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.count-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.count-slot.taken {
+  opacity: 0.25;
+}
+
+.count-stud .count-face {
+  width: 100%;
+  height: 100%;
+}
+
+.count-dot {
+  display: block;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  box-shadow:
+    inset 0 -4px 0 rgba(0, 0, 0, 0.25),
+    inset 0 3px 0 rgba(255, 255, 255, 0.3),
+    0 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.count-stud.counted .count-dot {
+  outline: 3px solid var(--b-yellow);
+  outline-offset: 2px;
+}
+
+.count-grid.count-studgrid {
+  --count-size: 44px;
+  --gap: 6px;
+  padding: 0;
+}
+
+.count-grid .count-stud {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.count-grid .count-dot {
+  width: 68%;
+  height: 68%;
+}
+
+.count-groups {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.count-group {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 3), 44px);
+  gap: 6px;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--tile-2);
+}
+
+/* ---- Base-ten blocks ---- */
+.count-baseten {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.count-op {
+  font-size: 1.6rem;
+}
+
+.count-blocks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+}
+
+.count-block {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.count-block.ten {
+  padding: 4px 13px;
+}
+
+.count-block.counted {
+  background: color-mix(in srgb, var(--b-yellow) 32%, transparent);
+  box-shadow: inset 0 0 0 3px var(--b-yellow);
+}
+
+.count-ones {
+  display: grid;
+  grid-template-columns: repeat(5, 44px);
+  gap: 4px;
+}
+
+.count-unit {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+}
+
+.count-fractions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+/* ---- The bar under the picture: hint, the child's own count, reset ---- */
+.count-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 60px;
+  padding-top: 8px;
+}
+
+.count-hint {
+  font-size: 1.9rem;
+  line-height: 1;
+  animation: count-nudge 1.3s ease-in-out 0.5s 3;
+}
+
+.count-total {
+  --b: var(--b-yellow);
+  --b-ink: #1a1a1a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 52px;
+  height: 48px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  background: var(--b);
+  color: var(--b-ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.6rem;
+  line-height: 1;
+  box-shadow:
+    inset 0 -5px 0 rgba(0, 0, 0, 0.2),
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    0 3px 0 rgba(0, 0, 0, 0.25);
+  animation: count-pop 0.38s cubic-bezier(0.3, 1.6, 0.6, 1);
+}
+
+.count-total-kind {
+  font-size: 1.3rem;
+}
+
+.count-total.tone-yellow { --b: var(--b-yellow); --b-ink: #1a1a1a; }
+.count-total.tone-azure { --b: var(--b-azure); --b-ink: #10242a; }
+.count-total.tone-lime { --b: var(--b-lime); --b-ink: #1a1a1a; }
+.count-total.tone-orange { --b: var(--b-orange); --b-ink: #1a1a1a; }
+.count-total.tone-red { --b: var(--b-red); --b-ink: #ffffff; }
+.count-total.tone-blue { --b: var(--b-blue); --b-ink: #ffffff; }
+.count-total.tone-green { --b: var(--b-green); --b-ink: #ffffff; }
+.count-total.tone-purple { --b: var(--b-purple); --b-ink: #ffffff; }
+
+.brick.count-reset {
+  margin-top: 0;
+  min-width: 52px;
+  min-height: 48px;
+  padding: 0 0.7em;
+  font-size: 1.5rem;
+}
+
+body.high-contrast .count-thing,
+body.high-contrast .count-total {
+  outline: 2px solid #000;
+}
+
+/* ---- Animations (off with "no animation" and reduced motion) ---- */
+@keyframes count-pop {
+  0% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes count-hop {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  35% {
+    transform: translateY(-8px) scale(1.16) rotate(-7deg);
+  }
+  70% {
+    transform: translateY(0) scale(0.96) rotate(4deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes count-nudge {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+body.no-anim .count-item,
+body.no-anim .count-face,
+body.no-anim .count-badge,
+body.no-anim .count-total,
+body.no-anim .count-hint {
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .count-face,
+  .count-badge,
+  .count-total,
+  .count-hint {
+    animation: none;
+  }
+}

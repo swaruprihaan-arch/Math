@@ -1,0 +1,194 @@
+/* =====================================================================
+   Scribble — handwriting turns into typed text (HandwritingPad, onConvert).
+   Ink fades / blurs / shrinks while the typed text fades in with a soft
+   shimmer, then the text glides up into the answer box.
+   Animations respect body.no-anim and prefers-reduced-motion (the pad also
+   skips the overlay in JS, so the answer still updates instantly).
+   ===================================================================== */
+
+.hw-stage {
+  position: relative;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Comfortable touch targets for the pad tools (iPad fingers / phones). */
+.hw-tools .brick {
+  min-height: 48px;
+  min-width: 56px;
+  font-size: 1.2rem;
+}
+
+.scribble-layer {
+  --scribble-ink: var(--ink, #141a24);
+  --scribble-glint: #9fd0ff;
+  --scribble-morph: 360ms;
+  --scribble-glide: 420ms;
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  overflow: visible;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+@supports (color: color-mix(in srgb, red 50%, white)) {
+  .scribble-layer {
+    --scribble-glint: color-mix(in srgb, var(--accent, #d01012) 35%, #ffffff);
+  }
+}
+
+/* ---------- the handwriting: fades, blurs and shrinks toward the text ---------- */
+.scribble-ink {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  animation: scribble-ink-out var(--scribble-morph) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform, opacity, filter;
+}
+
+.scribble-ink path {
+  fill: none;
+  stroke: var(--scribble-ink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@keyframes scribble-ink-out {
+  0% {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1);
+  }
+  55% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    filter: blur(3px);
+    transform: scale(0.84);
+  }
+}
+
+/* ---------- the typed text ---------- */
+.scribble-text {
+  position: absolute;
+  font-family: var(--font-display, 'Fredoka', 'Nunito', system-ui, sans-serif);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--scribble-ink);
+  transform: translate(-50%, -50%);
+  animation: scribble-text-in var(--scribble-morph) cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  will-change: transform, opacity;
+}
+
+@keyframes scribble-text-in {
+  0% {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translate(-50%, -50%) scale(0.72);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.scribble-text.is-gliding {
+  animation: scribble-text-up var(--scribble-glide) cubic-bezier(0.45, 0, 0.2, 1) forwards;
+}
+
+@keyframes scribble-text-up {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  65% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--scribble-dx, 0px)), calc(-50% + var(--scribble-dy, -120px))) scale(var(--scribble-scale, 0.5));
+  }
+}
+
+/* Soft shimmer sweeping across the freshly typed text. */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .scribble-shine {
+    background-image: linear-gradient(105deg, var(--scribble-ink) 0 38%, var(--scribble-glint) 50%, var(--scribble-ink) 62% 100%);
+    background-size: 300% 100%;
+    background-position: 100% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    animation: scribble-shimmer calc(var(--scribble-morph) + var(--scribble-glide) / 2) ease-out both;
+  }
+}
+
+@keyframes scribble-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+/* ---------- "✏️ Pencil mode": a finger stroke was ignored (palm rejection) ---------- */
+.hw-pencil-hint {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  z-index: 4;
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 2px solid var(--edge, #1f2937);
+  background: var(--tile, #ffffff);
+  color: var(--ink, #141a24);
+  font-family: var(--font-display, 'Fredoka', ui-rounded, system-ui, sans-serif);
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: hw-pencil-hint-in 180ms ease-out both;
+}
+
+@keyframes hw-pencil-hint-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* No animations: the pad commits instantly; never show a frozen overlay. */
+body.no-anim .scribble-layer {
+  display: none;
+}
+
+body.no-anim .hw-pencil-hint {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scribble-layer {
+    display: none;
+  }
+
+  .hw-pencil-hint {
+    animation: none;
+  }
+}

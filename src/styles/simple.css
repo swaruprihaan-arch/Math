@@ -1,0 +1,198 @@
+/* =====================================================================
+   Simple look (Look → "Simple, clean look", on by default):
+   calm plain background, flat soft cards, bricks without studs.
+   Loaded last so it wins over bricks.css / kidfun.css.
+   ===================================================================== */
+
+html:has(body.simple) {
+  background-color: color-mix(in srgb, var(--plate) 12%, #f5f7fb);
+  background-image: none;
+}
+
+html:has(body.simple.baseplate-NIGHT) {
+  background-color: #151b24;
+}
+
+body.simple {
+  --radius: 24px;
+}
+
+body.simple .tile {
+  border: none;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.06),
+    0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+body.simple .tile.studded::before,
+body.simple .brick::before,
+body.simple .logo-brick::before {
+  display: none;
+}
+
+body.simple .brick {
+  border-radius: 16px;
+  box-shadow:
+    inset 0 -4px 0 rgba(0, 0, 0, 0.16),
+    0 2px 6px rgba(15, 23, 42, 0.12);
+}
+
+body.simple .brick:active {
+  transform: translateY(2px) scale(0.97);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.16);
+}
+
+body.simple .brick.white {
+  outline: none;
+  box-shadow:
+    inset 0 -4px 0 rgba(0, 0, 0, 0.08),
+    0 2px 6px rgba(15, 23, 42, 0.12);
+}
+
+body.simple .brick.ghost {
+  --b: #eef1f6;
+}
+
+body.simple.baseplate-NIGHT .brick.ghost {
+  --b: var(--tile-2);
+}
+
+body.simple .answer-box {
+  border-width: 3px;
+  border-radius: 18px;
+  background: var(--tile-2);
+}
+
+body.simple .blank {
+  border-width: 0.06em;
+  border-radius: 0.3em;
+}
+
+body.simple .pill {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
+}
+
+body.simple .welcome-hint {
+  color: var(--muted);
+  text-shadow: none;
+  font-weight: 700;
+}
+
+body.simple .hw-canvas {
+  border-style: solid;
+  border-width: 3px;
+  border-color: color-mix(in srgb, var(--edge) 12%, transparent);
+  border-radius: 18px;
+}
+
+/* ---------------------------------------------------------------------
+   + − × ÷ operation buttons above the number pad (any look)
+   --------------------------------------------------------------------- */
+.op-bar {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px auto 2px;
+  max-width: 440px;
+}
+
+.op-btn {
+  flex: 1 1 0;
+  min-width: 52px;
+  max-width: 84px;
+  min-height: 52px;
+  border: 3px solid transparent;
+  border-radius: 16px;
+  background: var(--tile-2);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  transition:
+    transform 0.12s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.op-btn.op-all {
+  font-size: 1.5rem;
+}
+
+.op-btn:active {
+  transform: scale(0.92);
+}
+
+.op-btn.op-add.on { background: var(--b-green); color: #fff; }
+.op-btn.op-subtract.on { background: var(--b-blue); color: #fff; }
+.op-btn.op-multiply.on { background: var(--b-orange); color: #1a1a1a; }
+.op-btn.op-divide.on { background: var(--b-purple); color: #fff; }
+.op-btn.op-all.on { background: var(--b-yellow); color: #1a1a1a; }
+
+.op-btn.on {
+  border-color: rgba(0, 0, 0, 0.12);
+  animation: op-pick 0.3s cubic-bezier(0.3, 1.6, 0.6, 1);
+}
+
+@keyframes op-pick {
+  from {
+    transform: scale(0.85);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   iPad first: landscape (1024–1366 wide) keeps question and pad side by
+   side with no scrolling; portrait stacks them with a roomy pad.
+   --------------------------------------------------------------------- */
+@media (min-width: 740px) and (orientation: portrait) {
+  .kid-screen .keypad,
+  .kid-screen .op-bar,
+  .kid-screen .keypad-extra {
+    max-width: 520px;
+  }
+  .kid-screen .keypad .brick {
+    min-height: 76px;
+  }
+  .kid-screen .question-tile .math {
+    font-size: clamp(2.6rem, 7vw, 4rem);
+  }
+}
+
+@media (min-width: 900px) and (orientation: landscape) and (max-height: 860px) {
+  .kid-screen .keypad {
+    gap: 10px 10px;
+    margin-top: 8px;
+  }
+  .kid-screen .keypad .brick,
+  .kid-screen .keypad.style-tally .brick,
+  .kid-screen .keypad.style-both .brick {
+    min-height: 60px;
+  }
+  .kid-screen .tile {
+    margin: 12px 0;
+  }
+  .kid-screen .answer-tile {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  .kid-screen .tally-strip {
+    min-height: 24px;
+  }
+}
+
+/* Phones: everything fits one column; operation buttons stay thumb-sized. */
+@media (max-width: 420px) {
+  .op-btn {
+    min-height: 48px;
+    font-size: 1.6rem;
+  }
+}
